@@ -1,0 +1,37 @@
+{
+  "country": [
+    "CN"
+  ],
+  "city": [
+    "Beijing"
+  ],
+  "province": [
+    "Beijing"
+  ],
+  "section": [
+    "tech"
+  ],
+  "company": [
+    "TeaCool"
+  ],
+  "street": [
+    "biu veen"
+  ],
+  "post_code": [
+    "666333"
+  ],
+  "common_name": "www.teacool.com",
+  "alternate_dns_names": [
+    "www.teacool.com"
+  ],
+  "alternate_emails": [
+    "teacool@qq.com"
+  ],
+  "alternate_ips": [
+    "127.0.0.1",
+    "192.168.99.140"
+  ],
+  "alternate_urls": [],
+  "not_before": "2019-01-01 00:00:00",
+  "not_after": "2029-01-01 00:00:00"
+}
