@@ -1,7 +1,6 @@
 package httpext
 
 import (
-	"devtools/comerr"
 	"encoding/json"
 	"net/http"
 )
@@ -44,18 +43,13 @@ func NewStdResp(status *StdStatus, payload interface{}) *StdResp {
 }
 
 func (this *StdResp) WriteJson(respw http.ResponseWriter) (n int, err error) {
-	if respw == nil {
-		return 0, comerr.ParamInvalid
-	}
-
-	buf, err := json.Marshal(this)
-	if err != nil {
+	var buf []byte
+	if buf, err = json.Marshal(this); err != nil {
 		respw.WriteHeader(http.StatusInternalServerError)
-
-		return 0, err
+	} else {
+		respw.Header().Set("Content-Type", "application/json")
+		n, err = respw.Write(buf)
 	}
 
-	respw.Header().Set("Content-Type", "application/json")
-
-	return respw.Write(buf)
+	return
 }
