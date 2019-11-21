@@ -1,20 +1,17 @@
 package algorithm
 
 func QuickSort(data SeqData, start, end int) {
-	if data == nil || data.Len() == 0 || start >= end {
+	if start >= end {
 		return
 	}
 
 	Disorder(data, start, end)
-	var (
-		pivot = start
-		i     = start
-		j     = start + 1
-	)
+	var i, j, pivot = start, start + 1, start
 	for j < end {
 		if data.Less(j, pivot) {
-			data.Swap(i+1, j)
-			i++
+			if i++; i != j {
+				data.Swap(i, j)
+			}
 		}
 		j++
 	}
