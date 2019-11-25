@@ -12,7 +12,17 @@ var (
 	sdata = sort.IntSlice(data)
 )
 
+func TestBinarySearch(t *testing.T) {
+	QuickSort(sdata, 0, len(sdata))
+	log.Println(sdata)
+	log.Println(BinarySearch(IntSearchable(sdata), 2))
+	log.Println(BinarySearch(IntSearchable(sdata), 9))
+	log.Println(BinarySearch(IntSearchable(sdata), 543))
+	log.Println(BinarySearch(IntSearchable(sdata), 544))
+}
+
 func TestDisorder(t *testing.T) {
+	QuickSort(sdata, 0, len(sdata))
 	log.Println(sdata)
 	Disorder(sdata, 7, 12)
 	log.Println(sdata)
@@ -31,9 +41,6 @@ func TestQuickLocate(t *testing.T) {
 	log.Println(sdata)
 }
 
-func TestBinarySearch(t *testing.T) {
-	QuickSort(sdata, 0, sdata.Len())
-	ordered := OrderedInts(sdata)
-	log.Println(ordered)
-	log.Println(BinarySearch(ordered, 34))
+func TestTrie(t *testing.T) {
+
 }

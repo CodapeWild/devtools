@@ -4,7 +4,12 @@ import (
 	"math/rand"
 )
 
-func Disorder(data SeqData, start, end int) {
+type Swapable interface {
+	Len() int
+	Swap(i, j int)
+}
+
+func Disorder(data Swapable, start, end int) {
 	if data == nil || start > end || data.Len() < end-start {
 		return
 	}
