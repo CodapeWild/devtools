@@ -85,7 +85,7 @@ func (this *TrieRoot) Remove(words ...TrieWord) int {
 		}
 
 		if node := this.Find(word); node != nil {
-			node.Hit--
+			node.Hit = 0
 			removed++
 		}
 	}
