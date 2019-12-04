@@ -32,7 +32,7 @@ FOUND:
 	return
 }
 
-// post json data through url
+// post and receive json data
 func PostJson(rawurl string, req, resp interface{}) (status int, err error) {
 	var u *url.URL
 	if u, err = url.Parse(rawurl); err != nil {
