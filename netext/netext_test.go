@@ -1,4 +1,24 @@
-package crawler
+package netext
+
+import (
+	"errors"
+	"fmt"
+	"log"
+	"net"
+	"net/url"
+	"strconv"
+	"testing"
+	"time"
+)
+
+func TestIp(t *testing.T) {
+	log.Println(IsPrivate(net.ParseIP("192.168.1.100")))
+	log.Println(IsPrivate(net.ParseIP("172.16.1.100")))
+	log.Println(IsPrivate(net.ParseIP("10.18.3.6")))
+	log.Println(IsPrivate(net.ParseIP("198.18.1.100")))
+	log.Println(IsPrivate(net.ParseIP("192.0.0.100")))
+	log.Println(IsPrivate(net.ParseIP("100.64.1.100")))
+}
 
 /*
 Package socks implements a SOCKS (SOCKS4, SOCKS4A and SOCKS5) proxy client.
@@ -30,15 +50,6 @@ A complete example using this package:
 		return
 	}
 */
-
-import (
-	"errors"
-	"fmt"
-	"net"
-	"net/url"
-	"strconv"
-	"time"
-)
 
 // Constants to choose which version of SOCKS protocol to use.
 const (
@@ -304,4 +315,14 @@ func dialError(err error) func(string, string) (net.Conn, error) {
 	return func(_, _ string) (net.Conn, error) {
 		return nil, err
 	}
+}
+
+func TestDial(t *testing.T) {
+	conn, err := net.Dial("tcp", "127.0.0.1:1087")
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	defer conn.Close()
+
+	log.Println(conn.RemoteAddr())
 }

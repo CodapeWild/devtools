@@ -2,6 +2,6 @@
   "host": "localhost",
   "port": "3306",
   "user": "root",
-  "pswd": "666999",
-  "db": "foo"
+  "pswd": "000000",
+  "db": ""
 }

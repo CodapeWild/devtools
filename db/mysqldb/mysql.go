@@ -2,7 +2,6 @@ package mysqldb
 
 import (
 	"database/sql"
-	"devtools/comerr"
 	"fmt"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -22,10 +21,6 @@ type MysqlConfig struct {
 
 // user:pswd@tcp(host:port)/db
 func (this *MysqlConfig) NewDb() (*sql.DB, error) {
-	if this.Db == "" {
-		return nil, comerr.ParamInvalid
-	}
-
 	if this.Host == "" {
 		this.Host = "localhost"
 	}

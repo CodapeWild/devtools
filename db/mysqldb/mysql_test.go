@@ -25,5 +25,5 @@ func TestMysqlDb(t *testing.T) {
 	}
 	defer db.Close()
 
-	log.Println(db.Exec(`create table tb_user(name varchar(30), age int);`))
+	log.Println(db.Exec(`create table tb_user_test(name varchar(30), age int);`))
 }

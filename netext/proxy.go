@@ -1,4 +1,4 @@
-package crawler
+package netext
 
 import (
 	"devtools/comerr"
@@ -42,6 +42,7 @@ func (this *Proxy) IsValid() bool {
 }
 
 func (this *Proxy) Dial() net.Conn {
+	return nil
 }
 
 const (
