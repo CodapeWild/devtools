@@ -194,7 +194,7 @@ func (this *RedisWrapper) HMScanStruct(key string, dst interface{}) error {
 	}
 	src := rply.([]interface{})
 	if len(src) == 0 {
-		return comerr.NoEntryFound
+		return comerr.NotFound
 	}
 
 	return redis.ScanStruct(src, dst)

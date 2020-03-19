@@ -2,8 +2,6 @@ package httpext
 
 import (
 	"context"
-	"devtools/access"
-	"devtools/directory"
 	"devtools/session"
 	"io"
 	"log"
@@ -25,28 +23,28 @@ const (
 	MultipartFileHeader_Context_Key = "MultipartFileHeader_CTX"
 )
 
-func PostOnly(handler http.HandlerFunc) http.HandlerFunc {
-	return func(respw http.ResponseWriter, req *http.Request) {
+func PostOnly(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			respw.WriteHeader(http.StatusMethodNotAllowed)
 		} else {
-			handler(respw, req)
+			handler.ServeHTTP(respw, req)
 		}
-	}
+	})
 }
 
-func GetOnly(handler http.HandlerFunc) http.HandlerFunc {
-	return func(respw http.ResponseWriter, req *http.Request) {
+func GetOnly(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodGet {
 			respw.WriteHeader(http.StatusMethodNotAllowed)
 		} else {
-			handler(respw, req)
+			handler.ServeHTTP(respw, req)
 		}
-	}
+	})
 }
 
-func AfterLogin(handler http.HandlerFunc, keeper *session.Keeper) http.HandlerFunc {
-	return func(respw http.ResponseWriter, req *http.Request) {
+func AfterLogin(handler http.Handler, keeper *session.Keeper) http.Handler {
+	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
 		if cookie := req.Header.Get(Cookie_Header_Key); keeper.GetSessionTTL(cookie) <= 0 {
 			NewStdResp(StateDataExpired, nil).WriteJson(respw)
 		} else {
@@ -54,10 +52,10 @@ func AfterLogin(handler http.HandlerFunc, keeper *session.Keeper) http.HandlerFu
 				log.Println(err.Error())
 				NewStdResp(StateProcessError, nil).WriteJson(respw)
 			} else {
-				handler(respw, req.WithContext(context.WithValue(req.Context(), Id_Context_Key, idstr)))
+				handler.ServeHTTP(respw, req.WithContext(context.WithValue(req.Context(), Id_Context_Key, idstr)))
 			}
 		}
-	}
+	})
 }
 
 // map[media]struct{AllowTypes: [aac, mp4, x-flv, jpeg...], MaxSize: kb}
@@ -66,8 +64,8 @@ type MIMEValidator map[string]struct {
 	MaxSize      int64    `json:"max_size"`
 }
 
-func CheckMultiFile(handler http.HandlerFunc, formFileKey string, mval MIMEValidator) http.HandlerFunc {
-	return func(respw http.ResponseWriter, req *http.Request) {
+func CheckMultiFile(handler http.Handler, formFileKey string, mval MIMEValidator) http.Handler {
+	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
 		mf, mfh, err := req.FormFile(formFileKey)
 		if err != nil {
 			log.Println(err.Error())
@@ -98,8 +96,6 @@ func CheckMultiFile(handler http.HandlerFunc, formFileKey string, mval MIMEValid
 			return
 		}
 		if iana == "application/octet-stream" {
-			media = directory.Bytes
-			ext = directory.Bytes
 		} else {
 			media = iana[:strings.Index(iana, "/")]
 		}
@@ -125,7 +121,7 @@ func CheckMultiFile(handler http.HandlerFunc, formFileKey string, mval MIMEValid
 						req = req.WithContext(context.WithValue(req.Context(), Media_Context_Key, media))
 						req = req.WithContext(context.WithValue(req.Context(), MultipartFile_Context_Key, mf))
 						req = req.WithContext(context.WithValue(req.Context(), MultipartFileHeader_Context_Key, mfh))
-						handler(respw, req)
+						handler.ServeHTTP(respw, req)
 
 						return
 					}
@@ -133,14 +129,5 @@ func CheckMultiFile(handler http.HandlerFunc, formFileKey string, mval MIMEValid
 				NewStdResp(StateDataTypeInvalid, nil).WriteJson(respw)
 			}
 		}
-	}
-}
-
-/*
-	call this method with cookie and url tailed with resource id
-	todo: ???
-*/
-func CheckAccess(handler http.HandlerFunc, prefix string, accCtrl *access.AccessController) http.HandlerFunc {
-	return func(respw http.ResponseWriter, req *http.Request) {
-	}
+	})
 }

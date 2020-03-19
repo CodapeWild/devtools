@@ -7,16 +7,19 @@ import (
 )
 
 func TestIdFlaker(t *testing.T) {
-	fk, err := NewIdFlaker(1)
+	idflk, err := NewIdFlaker(1)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
 
-	id := fk.NextInt64Id()
-	fmt.Println(id)
-	fmt.Println(fk.id>>53, fk.ts, fk.seq)
-	fmt.Println(ParseInt64Id(id))
-	fmt.Println(fk.NextStrId())
+	id := idflk.NextInt64Id()
+	log.Println(id)
+	log.Println(id>>53, id>>42&seq_mask, id&ts_mask)
+	log.Println(ParseInt64Id(id))
+
+	sid := idflk.NextBase64Id()
+	log.Println(sid)
+	log.Println(ParseBase64Id(sid))
 }
 
 func TestEfficiency(t *testing.T) {
