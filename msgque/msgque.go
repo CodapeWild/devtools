@@ -1,6 +1,7 @@
 package msgque
 
 import (
+	"devtools/code"
 	"devtools/comerr"
 	"time"
 )
@@ -21,38 +22,71 @@ type CallbackMsg struct {
 }
 
 type Message interface {
-	Type() interface{}
 	Id() interface{}
+	Type() interface{}
 	Callback(cbMsg *CallbackMsg, timeout time.Duration) bool
 }
 
+type TicketManager interface {
+	Threads() int
+	Generate() interface{}
+	Retrieve() interface{}
+	Recede(ticket interface{}, msg Message)
+}
+
+type TicketQueue struct {
+	maxThrds int
+	tickets  chan interface{}
+}
+
+func NewTicketQueue(maxThrds int) *TicketQueue {
+	return &TicketQueue{
+		maxThrds: maxThrds,
+		tickets:  make(chan interface{}, maxThrds),
+	}
+}
+
+func (this *TicketQueue) Threads() int {
+	return this.maxThrds
+}
+
+func (this *TicketQueue) Generate() interface{} {
+	return code.RandBase64(16)
+}
+
+func (this *TicketQueue) Retrieve() interface{} {
+	return <-this.tickets
+}
+
+func (this *TicketQueue) Recede(ticket interface{}, msg Message) {
+	this.tickets <- ticket
+}
+
 const (
-	def_max_buffer  int           = 6
-	def_max_threads int           = 6
-	def_timeout     time.Duration = 3
+	def_max_buffer int           = 6
+	def_timeout    time.Duration = 3
 )
 
-type Fanout func(msg Message)
+type FanoutHandler func(ticket interface{}, msg Message)
 
 type MessageQueue struct {
-	qBuf     int
-	msgQ     chan Message
-	maxThrds int
-	thrds    chan int
-	timeout  time.Duration
+	TicketManager
+	msgC    chan Message
+	qBuf    int
+	timeout time.Duration
 }
 
 type MessageQueueSetting func(msgQ *MessageQueue)
 
-func SetQueueBuffer(qBuf int) MessageQueueSetting {
+func SetTicketManager(mngr TicketManager) MessageQueueSetting {
 	return func(msgQ *MessageQueue) {
-		msgQ.qBuf = qBuf
+		msgQ.TicketManager = mngr
 	}
 }
 
-func SetMaxThreads(maxThrds int) MessageQueueSetting {
+func SetQueueBuffer(qBuf int) MessageQueueSetting {
 	return func(msgQ *MessageQueue) {
-		msgQ.maxThrds = maxThrds
+		msgQ.qBuf = qBuf
 	}
 }
 
@@ -64,28 +98,30 @@ func SetTimeout(timeout time.Duration) MessageQueueSetting {
 
 func NewMessageQueue(opt ...MessageQueueSetting) *MessageQueue {
 	msgQ := &MessageQueue{
-		qBuf:     def_max_buffer,
-		maxThrds: def_max_threads,
-		timeout:  def_timeout,
+		qBuf:    def_max_buffer,
+		timeout: def_timeout,
 	}
 	for _, v := range opt {
 		v(msgQ)
 	}
 
-	msgQ.msgQ = make(chan Message, msgQ.qBuf)
-	msgQ.thrds = make(chan int, msgQ.maxThrds)
+	msgQ.msgC = make(chan Message, msgQ.qBuf)
 
 	return msgQ
 }
 
-func (this *MessageQueue) StartMsgQueue(out Fanout) {
+func (this *MessageQueue) StartMsgQueue(out FanoutHandler) {
+	for i := 0; i < this.Threads(); i++ {
+		this.Recede(this.Generate(), nil)
+	}
+
 	go func() {
-		for v := range this.msgQ {
-			this.thrds <- 1
-			go func(msg Message) {
-				out(msg)
-				<-this.thrds
-			}(v)
+		for v := range this.msgC {
+			tick := this.Retrieve()
+			go func(tick interface{}, msg Message) {
+				out(tick, msg)
+				this.Recede(tick, msg)
+			}(tick, v)
 		}
 	}()
 }
@@ -94,7 +130,7 @@ func (this *MessageQueue) Send(msg Message) error {
 	select {
 	case <-time.After(this.timeout):
 		return comerr.Overtime
-	case this.msgQ <- msg:
+	case this.msgC <- msg:
 		return nil
 	}
 }

@@ -89,7 +89,7 @@ func createTable(db *sql.DB) error {
 	return err
 }
 
-func findOneMFile(db *sql.DB, where string) (*MFile, error) {
+func findMFile(db *sql.DB, where string) (*MFile, error) {
 	row := db.QueryRow(fmt.Sprintf("select * from %s where %s\n", def_fstab_file, where))
 	m := &MFile{}
 

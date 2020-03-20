@@ -2,14 +2,17 @@ package filesystem
 
 import (
 	"database/sql"
+	"devtools/comerr"
 	"devtools/file"
 	"devtools/idflaker"
+	"devtools/msgque"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -62,6 +65,7 @@ type FileSystem struct {
 	fsdbPath                             string
 	fsdb                                 *sql.DB
 	idflk                                *idflaker.IdFlaker
+	*msgque.MessageQueue
 }
 
 type FileSystemSetting func(fs *FileSystem)
@@ -124,6 +128,9 @@ func NewFileSystem(opt ...FileSystemSetting) (*FileSystem, error) {
 		return nil, err
 	}
 
+	fs.MessageQueue = msgque.NewMessageQueue(msgque.SetMaxThreads(1), msgque.SetTimeout(time.Second))
+	fs.StartMsgQueue(fs.fileMsgProcessor)
+
 	return fs, nil
 }
 
@@ -133,7 +140,7 @@ func (this *FileSystem) Open(filePath string) (http.File, error) {
 		return nil, os.ErrInvalid
 	}
 
-	m, err := findOneMFile(this.fsdb, "path="+filePath)
+	m, err := findMFile(this.fsdb, "path="+filePath)
 	if err != nil {
 		log.Println(err.Error())
 
@@ -151,4 +158,27 @@ func (this *FileSystem) Open(filePath string) (http.File, error) {
 	} else {
 		return &File{File: f, fsdb: this.fsdb, showHidden: this.showHidden, showForbidden: this.showForbidden}, nil
 	}
+}
+
+func (this *FileSystem) Send(msg msgque.Message) {
+	this.MessageQueue.Send(msg)
+}
+
+func (this *FileSystem) fileMsgProcessor(msg msgque.Message) {
+	switch msg.Type() {
+	case Save_File:
+		this.saveFile(msg)
+	case Del_File:
+		this.deleteFile(msg)
+	default:
+		log.Println(comerr.ParamInvalid.Error())
+	}
+}
+
+func (this *FileSystem) saveFile(msg msgque.Message) {
+
+}
+
+func (this *FileSystem) deleteFile(msg msgque.Message) {
+
 }

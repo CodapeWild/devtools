@@ -11,11 +11,11 @@ import (
 
 // return base64 random string with encoding buffer size is l
 func RandBase64(bufSize int) string {
-	p := make([]byte, bufSize)
+	buf := make([]byte, bufSize)
 	rand.Seed(time.Now().UnixNano())
-	rand.Read(p)
+	rand.Read(buf)
 
-	return base64.StdEncoding.EncodeToString(p)
+	return base64.StdEncoding.EncodeToString(buf)
 }
 
 // return a string of random number of length l

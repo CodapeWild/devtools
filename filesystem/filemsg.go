@@ -1,9 +1,7 @@
 package filesystem
 
 import (
-	"devtools/comerr"
 	"devtools/msgque"
-	"log"
 	"time"
 )
 
@@ -46,12 +44,12 @@ type DelFileMsg struct {
 	CbChan chan *msgque.CallbackMsg
 }
 
-func (this *DelFileMsg) Type() interface{} {
-	return Del_File
-}
-
 func (this *DelFileMsg) Id() interface{} {
 	return this.Id
+}
+
+func (this *DelFileMsg) Type() interface{} {
+	return Del_File
 }
 
 func (this *DelFileMsg) Callback(cbMsg *msgque.CallbackMsg, timeout time.Duration) bool {
@@ -61,23 +59,4 @@ func (this *DelFileMsg) Callback(cbMsg *msgque.CallbackMsg, timeout time.Duratio
 	case this.CbChan <- cbMsg:
 		return true
 	}
-}
-
-func FileMsgProcessor(msg msgque.Message) {
-	switch msg.Type() {
-	case Save_File:
-		SaveFile(msg)
-	case Del_File:
-		DelFile(msg)
-	default:
-		log.Println(comerr.ParamInvalid.Error())
-	}
-}
-
-func SaveFile(msg msgque.Message) {
-
-}
-
-func DelFile(msg msgque.Message) {
-
 }
