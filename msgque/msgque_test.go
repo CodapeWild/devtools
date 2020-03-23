@@ -1,53 +1,90 @@
 package msgque
 
 import (
+	"devtools/code"
+	"errors"
 	"log"
-	"math/rand"
-	"os"
 	"testing"
 	"time"
 )
 
-type LaughMsg struct {
-	id int
+type FooMsgType int
+
+const (
+	Foo1 FooMsgType = iota + 1
+	Foo2
+)
+
+type Foo1Msg struct {
+	MsgId string
+	CbC   chan interface{}
 }
 
-func (this *LaughMsg) Id() interface{} {
-	return this.id
+func (this *Foo1Msg) Id() interface{} {
+	return this.MsgId
 }
 
-func (this *LaughMsg) Type() interface{} {
-	return 1
+func (this *Foo1Msg) Type() interface{} {
+	return Foo1
 }
 
-func (this *LaughMsg) Callback(*CallbackMsg, time.Duration) bool {
-	return false
-}
-
-type SmileMsg struct {
-}
-
-func (this *SmileMsg) Id() interface{} {
-	return 2
-}
-
-func (this *SmileMsg) Type() interface{} {
-	return 2
-}
-
-func (this *SmileMsg) Callback(*CallbackMsg, time.Duration) bool {
-	return false
-}
-
-func Director(tick interface{}, msg Message) {
-	switch msg.Type() {
-	case 1:
-		log.Println(tick)
-		log.Println(msg.Id())
-	case 2:
-		log.Println(tick)
-		log.Println(msg.Id())
+func (this *Foo1Msg) Callback(cbMsg interface{}, timeout time.Duration) bool {
+	select {
+	case <-time.After(timeout):
+		return false
+	case this.CbC <- cbMsg:
+		return true
 	}
+}
+
+type Foo2Msg struct {
+	MsgId string
+	CbC   chan interface{}
+}
+
+func (this *Foo2Msg) Id() interface{} {
+	return this.MsgId
+}
+
+func (this *Foo2Msg) Type() interface{} {
+	return Foo2
+}
+
+func (this *Foo2Msg) Callback(cbMsg interface{}, timeout time.Duration) bool {
+	select {
+	case <-time.After(timeout):
+		return false
+	case this.CbC <- cbMsg:
+		return true
+	}
+}
+
+type FooCbMsg struct {
+	MsgId      string
+	MsgState   int
+	Err        error
+	MsgPayload interface{}
+}
+
+func (this *FooCbMsg) Id() interface{} {
+	return this.MsgId
+}
+
+func (this *FooCbMsg) State() interface{} {
+	return this.MsgState
+}
+
+func (this *FooCbMsg) Error() error {
+	return this.Err
+}
+
+func (this *FooCbMsg) Payload() interface{} {
+	return this.Payload
+}
+
+type FooTicket struct {
+	Code   string
+	Expire int
 }
 
 type FooTicketQueue struct {
@@ -55,41 +92,81 @@ type FooTicketQueue struct {
 }
 
 func (this *FooTicketQueue) Generate() interface{} {
-	return 123
+	return &FooTicket{
+		Code:   code.RandBase64(15),
+		Expire: 6,
+	}
+}
+
+func (this *FooTicketQueue) Recede(ticket interface{}) {
+	ftick, ok := ticket.(*FooTicket)
+	if !ok {
+		return
+	}
+
+	if ftick.Expire <= 0 {
+		return
+	}
+	ftick.Expire--
+
+	this.TicketQueue.Recede(ftick)
+}
+
+var count int = 0
+
+func FooFanout(ticket interface{}, msg Message) {
+	count++
+	switch msg.Type() {
+	case Foo1:
+		log.Println("******Foo1******")
+		msg.Callback(&FooCbMsg{
+			MsgId:      msg.Id().(string),
+			MsgState:   200,
+			Err:        nil,
+			MsgPayload: nil,
+		}, 6)
+	case Foo2:
+		log.Println("******Foo2******")
+		msg.Callback(&FooCbMsg{
+			MsgId:      msg.Id().(string),
+			MsgState:   404,
+			Err:        errors.New("can not found page"),
+			MsgPayload: nil,
+		}, 3)
+	default:
+	}
 }
 
 func TestMsgQ(t *testing.T) {
-	log.SetOutput(os.Stdout)
-	log.SetFlags(log.Lshortfile | log.LstdFlags)
+	ftickQ := &FooTicketQueue{NewTicketQueue(3)}
+	msgQ := NewMessageQueue(SetTicket(ftickQ), SetQueueBuffer(6), SetQueueTimeout(time.Second))
+	msgQ.StartUp(FooFanout)
 
-	msgQ := NewMessageQueue(SetTicketManager(&FooTicketQueue{NewTicketQueue(6)}))
-	msgQ.StartMsgQueue(Director)
+	go func() {
+		for {
+			cbc := make(chan interface{})
+			msgQ.Send(&Foo1Msg{MsgId: code.RandBase64(9), CbC: cbc})
+			log.Println(<-cbc)
+			time.Sleep(time.Second)
+		}
+	}()
 
-	// log.Println(msgQ.Retrieve())
-	// log.Println(msgQ.Retrieve())
-	// log.Println(msgQ.Retrieve())
+	go func() {
+		for {
+			cbc := make(chan interface{})
+			msgQ.Send(&Foo2Msg{MsgId: code.RandBase64(9), CbC: cbc})
+			log.Println(<-cbc)
+			time.Sleep(time.Second)
+		}
+	}()
 
-	for i := 0; i < 3; i++ {
-		go func(i int) {
-			for {
-				if rand.Intn(100) > 49 {
-					if err := msgQ.Send(&LaughMsg{}); err != nil {
-						log.Println(err.Error())
-					}
-				} else {
-					if err := msgQ.Send(&SmileMsg{}); err != nil {
-						log.Println(err.Error())
-					}
-				}
-			}
-		}(i)
-	}
-
-	// for i := 0; i < 100; i++ {
-	// 	if err := msgQ.Send(&LaughMsg{id: i}); err != nil {
-	// 		log.Println(err.Error())
-	// 	}
-	// }
+	go func() {
+		for {
+			log.Println(count)
+			time.Sleep(3 * time.Second)
+		}
+	}()
+	log.Println("###############", count)
 
 	select {}
 }

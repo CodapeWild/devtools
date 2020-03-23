@@ -24,8 +24,6 @@ const (
 	Def_Max_Contains             = 3
 	Def_FSDB_Path                = "./fs.db"
 	def_fstab_file               = "tab_file"
-	def_chan_size                = 6
-	def_timeout                  = 3
 )
 
 type File struct {
@@ -128,8 +126,8 @@ func NewFileSystem(opt ...FileSystemSetting) (*FileSystem, error) {
 		return nil, err
 	}
 
-	fs.MessageQueue = msgque.NewMessageQueue(msgque.SetMaxThreads(1), msgque.SetTimeout(time.Second))
-	fs.StartMsgQueue(fs.fileMsgProcessor)
+	fs.MessageQueue = msgque.NewMessageQueue(msgque.SetTicket(NewDirectoryQueue(fs.topDir, fs.dirMode, fs.idflk, fs.fsdb, 6)), msgque.SetQueueBuffer(6), msgque.SetQueueTimeout(time.Second))
+	fs.MessageQueue.StartUp(fs.fileMsgFanout)
 
 	return fs, nil
 }
@@ -164,21 +162,89 @@ func (this *FileSystem) Send(msg msgque.Message) {
 	this.MessageQueue.Send(msg)
 }
 
-func (this *FileSystem) fileMsgProcessor(msg msgque.Message) {
+func (this *FileSystem) fileMsgFanout(ticket interface{}, msg msgque.Message) {
 	switch msg.Type() {
 	case Save_File:
-		this.saveFile(msg)
+		this.saveFile(ticket, msg.(*SaveFileMsg))
 	case Del_File:
-		this.deleteFile(msg)
+		this.deleteFile(msg.(*DeleteFileMsg))
 	default:
 		log.Println(comerr.ParamInvalid.Error())
 	}
 }
 
-func (this *FileSystem) saveFile(msg msgque.Message) {
+func (this *FileSystem) saveFile(ticket interface{}, msg *SaveFileMsg) {
+	code := this.idflk.NextBase64Id()
+	dirCode := string(ticket.(DirectoryTicket))
+	path := fmt.Sprintf("/%s/%s", code, dirCode)
+	m := &MFile{
+		Code:        code,
+		DirCode:     dirCode,
+		IsDirectory: false,
+		Path:        path,
+		FileMode:    this.fileMode,
+		FileSize:    msg.Size,
+		Media:       msg.Media,
+		Span:        msg.Span,
+		State:       File_Normal,
+	}
 
+	err := insertMFile(this.fsdb, m)
+	if err != nil {
+		if msg.CbChan != nil {
+			callback(msg, File_Opt_Failed, err, 1)
+		}
+
+		return
+	}
+
+	f, err := os.OpenFile(this.topDir+path, os.O_CREATE|os.O_WRONLY, this.fileMode)
+	if err != nil {
+		if msg.CbChan != nil {
+			callback(msg, File_Opt_Failed, err, 1)
+		}
+
+		return
+	}
+	_, err = f.Write(msg.Buf)
+	if msg.CbChan != nil {
+		if err != nil {
+			callback(msg, File_Opt_Failed, err, 1)
+		} else {
+			callback(msg, File_Opt_Success, nil, 1)
+		}
+	}
 }
 
-func (this *FileSystem) deleteFile(msg msgque.Message) {
+func (this *FileSystem) deleteFile(msg *DeleteFileMsg) {
+	err := deleteMFile(this.fsdb, msg.Code)
+	if err != nil {
+		if msg.CbChan != nil {
+			callback(msg, File_Opt_Failed, err, 1)
+		}
 
+		return
+	}
+
+	var path string = "/" + msg.Code
+	if msg.DirCode != "" {
+		path = "/" + msg.DirCode + path
+	}
+	path = this.topDir + path
+	err = os.RemoveAll(path)
+	if msg.CbChan != nil {
+		if err != nil {
+			callback(msg, File_Opt_Failed, err, 1)
+		} else {
+			callback(msg, File_Opt_Success, nil, 1)
+		}
+	}
+}
+
+func callback(msg msgque.Message, state int, err error, timeout time.Duration) {
+	msg.Callback(&FileCallbackMsg{
+		MsgId: msg.Id().(string),
+		State: state,
+		Err:   err,
+	}, 1)
 }

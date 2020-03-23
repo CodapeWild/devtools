@@ -1,15 +1,17 @@
 package filesystem
 
 import (
-	"devtools/msgque"
 	"time"
 )
 
-type FileMsgType int
+const (
+	Save_File int = iota + 1
+	Del_File
+)
 
 const (
-	Save_File = iota + 1
-	Del_File
+	File_Opt_Success int = iota + 1
+	File_Opt_Failed
 )
 
 type SaveFileMsg struct {
@@ -18,18 +20,19 @@ type SaveFileMsg struct {
 	Size   int64
 	Media  MediaType
 	Span   int64
-	CbChan chan *msgque.CallbackMsg
-}
-
-func (this *SaveFileMsg) Type() interface{} {
-	return Save_File
+	State  int
+	CbChan chan interface{}
 }
 
 func (this *SaveFileMsg) Id() interface{} {
 	return this.MsgId
 }
 
-func (this *SaveFileMsg) Callback(cbMsg *msgque.CallbackMsg, timeout time.Duration) bool {
+func (this *SaveFileMsg) Type() interface{} {
+	return Save_File
+}
+
+func (this *SaveFileMsg) Callback(cbMsg interface{}, timeout time.Duration) bool {
 	select {
 	case <-time.After(timeout):
 		return false
@@ -38,25 +41,32 @@ func (this *SaveFileMsg) Callback(cbMsg *msgque.CallbackMsg, timeout time.Durati
 	}
 }
 
-type DelFileMsg struct {
-	MsgId  string
-	Code   string
-	CbChan chan *msgque.CallbackMsg
+type DeleteFileMsg struct {
+	MsgId   string
+	Code    string
+	DirCode string
+	CbChan  chan interface{}
 }
 
-func (this *DelFileMsg) Id() interface{} {
+func (this *DeleteFileMsg) Id() interface{} {
 	return this.Id
 }
 
-func (this *DelFileMsg) Type() interface{} {
+func (this *DeleteFileMsg) Type() interface{} {
 	return Del_File
 }
 
-func (this *DelFileMsg) Callback(cbMsg *msgque.CallbackMsg, timeout time.Duration) bool {
+func (this *DeleteFileMsg) Callback(cbMsg interface{}, timeout time.Duration) bool {
 	select {
 	case <-time.After(timeout):
 		return false
 	case this.CbChan <- cbMsg:
 		return true
 	}
+}
+
+type FileCallbackMsg struct {
+	MsgId string
+	State int
+	Err   error
 }

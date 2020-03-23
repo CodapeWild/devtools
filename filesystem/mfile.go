@@ -2,6 +2,7 @@ package filesystem
 
 import (
 	"database/sql"
+	"devtools/comerr"
 	"fmt"
 	"os"
 	"time"
@@ -112,4 +113,73 @@ func findMFiles(db *sql.DB, where string) ([]os.FileInfo, error) {
 	}
 
 	return ms, nil
+}
+
+func updateContains(db *sql.DB, dir string, v int) error {
+	m, err := findMFile(db, "code="+dir)
+	if err != nil {
+		return err
+	}
+	if !m.IsDirectory {
+		return comerr.ParamInvalid
+	}
+
+	v = m.Contains + v
+	if v < 0 {
+		v = 0
+	}
+
+	stmt, err := db.Prepare(fmt.Sprintf("update %s set contains=%d where code=%s", def_fstab_file, v, dir))
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	if _, err = tx.Stmt(stmt).Exec(); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+func insertMFile(db *sql.DB, mfile *MFile) error {
+	stmt, err := db.Prepare(fmt.Sprintf("insert into %s values(?,?,?,?,?,?,?,?,?,?,?,?)", def_fstab_file))
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	if _, err = tx.Stmt(stmt).Exec(mfile.Code, mfile.DirCode, mfile.IsDirectory, mfile.Path, mfile.Contains, mfile.FileMode, mfile.FileSize, mfile.Media, mfile.Span, time.Now().Unix(), 0, mfile.State); err != nil {
+		return err
+	}
+	if !mfile.IsDirectory {
+		if err = updateContains(db, mfile.DirCode, 1); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func deleteMFile(db *sql.DB, code string) error {
+	m, err := findMFile(db, "code="+code)
+	if err != nil {
+		return err
+	}
+
+	if m.IsDirectory {
+		_, err = db.Exec(fmt.Sprintf("delete from %s where code=%s and dir_code=%s", def_fstab_file, m.Code, m.Code))
+	} else {
+		if _, err = db.Exec(fmt.Sprintf("delete from %s where code = %s", def_fstab_file, m.Code)); err == nil {
+			err = updateContains(db, m.DirCode, -1)
+		}
+	}
+
+	return err
 }

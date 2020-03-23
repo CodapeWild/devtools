@@ -6,32 +6,17 @@ import (
 	"time"
 )
 
-type MsgState int
-
-const (
-	Msg_ProcSuccess MsgState = iota + 1
-	Msg_ProcFailed
-)
-
-type CallbackMsg struct {
-	Id      interface{}
-	Type    interface{}
-	State   int
-	Err     error
-	Payload interface{}
-}
-
 type Message interface {
 	Id() interface{}
 	Type() interface{}
-	Callback(cbMsg *CallbackMsg, timeout time.Duration) bool
+	Callback(cbMsg interface{}, timeout time.Duration) bool
 }
 
-type TicketManager interface {
+type Ticket interface {
 	Threads() int
 	Generate() interface{}
 	Retrieve() interface{}
-	Recede(ticket interface{}, msg Message)
+	Recede(ticket interface{})
 }
 
 type TicketQueue struct {
@@ -58,29 +43,29 @@ func (this *TicketQueue) Retrieve() interface{} {
 	return <-this.tickets
 }
 
-func (this *TicketQueue) Recede(ticket interface{}, msg Message) {
+func (this *TicketQueue) Recede(ticket interface{}) {
 	this.tickets <- ticket
 }
 
 const (
 	def_max_buffer int           = 6
-	def_timeout    time.Duration = 3
+	def_timeout    time.Duration = time.Second
 )
 
 type FanoutHandler func(ticket interface{}, msg Message)
 
 type MessageQueue struct {
-	TicketManager
-	msgC    chan Message
+	Ticket
+	msgChan chan Message
 	qBuf    int
 	timeout time.Duration
 }
 
 type MessageQueueSetting func(msgQ *MessageQueue)
 
-func SetTicketManager(mngr TicketManager) MessageQueueSetting {
+func SetTicket(tick Ticket) MessageQueueSetting {
 	return func(msgQ *MessageQueue) {
-		msgQ.TicketManager = mngr
+		msgQ.Ticket = tick
 	}
 }
 
@@ -90,7 +75,7 @@ func SetQueueBuffer(qBuf int) MessageQueueSetting {
 	}
 }
 
-func SetTimeout(timeout time.Duration) MessageQueueSetting {
+func SetQueueTimeout(timeout time.Duration) MessageQueueSetting {
 	return func(msgQ *MessageQueue) {
 		msgQ.timeout = timeout
 	}
@@ -105,22 +90,22 @@ func NewMessageQueue(opt ...MessageQueueSetting) *MessageQueue {
 		v(msgQ)
 	}
 
-	msgQ.msgC = make(chan Message, msgQ.qBuf)
+	msgQ.msgChan = make(chan Message, msgQ.qBuf)
 
 	return msgQ
 }
 
-func (this *MessageQueue) StartMsgQueue(out FanoutHandler) {
+func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 	for i := 0; i < this.Threads(); i++ {
-		this.Recede(this.Generate(), nil)
+		this.Recede(this.Generate())
 	}
 
 	go func() {
-		for v := range this.msgC {
+		for v := range this.msgChan {
 			tick := this.Retrieve()
 			go func(tick interface{}, msg Message) {
-				out(tick, msg)
-				this.Recede(tick, msg)
+				fanout(tick, msg)
+				this.Recede(tick)
 			}(tick, v)
 		}
 	}()
@@ -130,7 +115,7 @@ func (this *MessageQueue) Send(msg Message) error {
 	select {
 	case <-time.After(this.timeout):
 		return comerr.Overtime
-	case this.msgC <- msg:
+	case this.msgChan <- msg:
 		return nil
 	}
 }
