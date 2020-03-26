@@ -6,6 +6,7 @@ import (
 	"devtools/file"
 	"devtools/idflaker"
 	"devtools/msgque"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
@@ -51,7 +52,7 @@ func (this File) Readdir(count int) ([]os.FileInfo, error) {
 		fstate += "." + strconv.Itoa(File_Forbidden)
 	}
 
-	return findMFiles(this.fsdb, fmt.Sprintf("dir_code=%s and state in(%s) order by created desc group by is_dir", finfo.Name(), fstate))
+	return findMFiles(this.fsdb, fmt.Sprintf("dir_code='%s' and state in(%s) order by created desc group by is_dir", finfo.Name(), fstate))
 }
 
 type FileSystem struct {
@@ -138,7 +139,7 @@ func (this *FileSystem) Open(filePath string) (http.File, error) {
 		return nil, os.ErrInvalid
 	}
 
-	m, err := findMFile(this.fsdb, "path="+filePath)
+	m, err := findMFile(this.fsdb, "path='"+filePath+"'")
 	if err != nil {
 		log.Println(err.Error())
 
@@ -158,8 +159,8 @@ func (this *FileSystem) Open(filePath string) (http.File, error) {
 	}
 }
 
-func (this *FileSystem) Send(msg msgque.Message) {
-	this.MessageQueue.Send(msg)
+func (this *FileSystem) Send(msg msgque.Message) error {
+	return this.MessageQueue.Send(msg)
 }
 
 func (this *FileSystem) fileMsgFanout(ticket interface{}, msg msgque.Message) {
@@ -174,19 +175,20 @@ func (this *FileSystem) fileMsgFanout(ticket interface{}, msg msgque.Message) {
 }
 
 func (this *FileSystem) saveFile(ticket interface{}, msg *SaveFileMsg) {
-	code := this.idflk.NextBase64Id()
+	code := this.idflk.NextBase64Id(base64.RawURLEncoding)
 	dirCode := string(ticket.(DirectoryTicket))
 	path := fmt.Sprintf("/%s/%s", code, dirCode)
 	m := &MFile{
-		Code:        code,
-		DirCode:     dirCode,
-		IsDirectory: false,
-		Path:        path,
-		FileMode:    this.fileMode,
-		FileSize:    msg.Size,
-		Media:       msg.Media,
-		Span:        msg.Span,
-		State:       File_Normal,
+		Code:         code,
+		DirCode:      dirCode,
+		IsDirectory:  false,
+		Path:         path,
+		OriginalName: msg.Name,
+		FileMode:     this.fileMode,
+		FileSize:     msg.Size,
+		Media:        msg.Media,
+		Span:         msg.Span,
+		State:        msg.State,
 	}
 
 	err := insertMFile(this.fsdb, m)

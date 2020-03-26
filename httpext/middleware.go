@@ -16,11 +16,11 @@ const (
 )
 
 const (
-	Id_Context_Key                  = "ID_CTX"
-	MIME_Context_Key                = "MIME_CTX"
-	Media_Context_Key               = "Media_CTX"
-	MultipartFile_Context_Key       = "MultipartFILE_CTX"
-	MultipartFileHeader_Context_Key = "MultipartFileHeader_CTX"
+	Id_ContextKey                  = "ID_CTX"
+	MultipartFile_ContextKey       = "MultipartFILE_CTX"
+	MultipartFileHeader_ContextKey = "MultipartFileHeader_CTX"
+	Media_ContextKey               = "Media_CTX"
+	IANA_ContextKey                = "MIME_CTX"
 )
 
 func PostOnly(handler http.Handler) http.Handler {
@@ -52,7 +52,7 @@ func AfterLogin(handler http.Handler, keeper *session.Keeper) http.Handler {
 				log.Println(err.Error())
 				NewStdResp(StateProcessError, nil).WriteJson(respw)
 			} else {
-				handler.ServeHTTP(respw, req.WithContext(context.WithValue(req.Context(), Id_Context_Key, idstr)))
+				handler.ServeHTTP(respw, req.WithContext(context.WithValue(req.Context(), Id_ContextKey, idstr)))
 			}
 		}
 	})
@@ -117,10 +117,10 @@ func CheckMultiFile(handler http.Handler, formFileKey string, mval MIMEValidator
 				for _, v := range conds.AllowedTypes {
 					if ext == v {
 						mf.Seek(0, io.SeekStart)
-						req = req.WithContext(context.WithValue(req.Context(), MIME_Context_Key, iana))
-						req = req.WithContext(context.WithValue(req.Context(), Media_Context_Key, media))
-						req = req.WithContext(context.WithValue(req.Context(), MultipartFile_Context_Key, mf))
-						req = req.WithContext(context.WithValue(req.Context(), MultipartFileHeader_Context_Key, mfh))
+						req = req.WithContext(context.WithValue(req.Context(), IANA_ContextKey, iana))
+						req = req.WithContext(context.WithValue(req.Context(), Media_ContextKey, media))
+						req = req.WithContext(context.WithValue(req.Context(), MultipartFile_ContextKey, mf))
+						req = req.WithContext(context.WithValue(req.Context(), MultipartFileHeader_ContextKey, mfh))
 						handler.ServeHTTP(respw, req)
 
 						return

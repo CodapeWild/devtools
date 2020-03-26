@@ -16,6 +16,7 @@ const (
 
 type SaveFileMsg struct {
 	MsgId  string
+	Name   string
 	Buf    []byte
 	Size   int64
 	Media  MediaType
@@ -33,12 +34,16 @@ func (this *SaveFileMsg) Type() interface{} {
 }
 
 func (this *SaveFileMsg) Callback(cbMsg interface{}, timeout time.Duration) bool {
-	select {
-	case <-time.After(timeout):
-		return false
-	case this.CbChan <- cbMsg:
-		return true
+	if this.CbChan != nil {
+		select {
+		case <-time.After(timeout):
+			return false
+		case this.CbChan <- cbMsg:
+			return true
+		}
 	}
+
+	return false
 }
 
 type DeleteFileMsg struct {
@@ -57,12 +62,16 @@ func (this *DeleteFileMsg) Type() interface{} {
 }
 
 func (this *DeleteFileMsg) Callback(cbMsg interface{}, timeout time.Duration) bool {
-	select {
-	case <-time.After(timeout):
-		return false
-	case this.CbChan <- cbMsg:
-		return true
+	if this.CbChan != nil {
+		select {
+		case <-time.After(timeout):
+			return false
+		case this.CbChan <- cbMsg:
+			return true
+		}
 	}
+
+	return false
 }
 
 type FileCallbackMsg struct {

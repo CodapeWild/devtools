@@ -62,20 +62,20 @@ func (this *IdFlaker) until() {
 	}
 }
 
-func (this *IdFlaker) NextBase64Id() string {
+func (this *IdFlaker) NextBase64Id(encode *base64.Encoding) string {
 	buf := make([]byte, 8)
 	binary.BigEndian.PutUint64(buf, uint64(this.NextInt64Id()))
 
-	return base64.StdEncoding.EncodeToString(buf)
+	return encode.EncodeToString(buf)
 }
 
 func ParseInt64Id(flkId int64) (id, seq, ts int64) {
 	return flkId >> 53, flkId >> 42 & seq_mask, flkId & ts_mask
 }
 
-func ParseBase64Id(flkId string) (id int64, err error) {
+func ParseBase64Id(flkId string, encode *base64.Encoding) (id int64, err error) {
 	buf := make([]byte, 8)
-	_, err = base64.StdEncoding.Decode(buf, []byte(flkId))
+	_, err = encode.Decode(buf, []byte(flkId))
 	if err != nil {
 		return 0, err
 	}

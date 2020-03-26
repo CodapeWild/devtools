@@ -3,7 +3,7 @@
   "port": "6379",
   "pswd": "",
   "max_idle": 3,
-  "max_active": 3000,
+  "max_active": 300,
   "read_timeout": 3,
   "write_timeout": 6
 }

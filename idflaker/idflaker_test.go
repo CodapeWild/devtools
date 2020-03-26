@@ -1,6 +1,7 @@
 package idflaker
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
 	"testing"
@@ -17,9 +18,9 @@ func TestIdFlaker(t *testing.T) {
 	log.Println(id>>53, id>>42&seq_mask, id&ts_mask)
 	log.Println(ParseInt64Id(id))
 
-	sid := idflk.NextBase64Id()
+	sid := idflk.NextBase64Id(base64.RawURLEncoding)
 	log.Println(sid)
-	log.Println(ParseBase64Id(sid))
+	log.Println(ParseBase64Id(sid, base64.RawURLEncoding))
 }
 
 func TestEfficiency(t *testing.T) {

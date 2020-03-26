@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"devtools/idflaker"
 	"devtools/msgque"
+	"encoding/base64"
 	"log"
 	"os"
 )
@@ -43,7 +44,7 @@ func (this *DirectoryQueue) Generate() interface{} {
 		}
 	}()
 
-	code := this.idflk.NextBase64Id()
+	code := this.idflk.NextBase64Id(base64.RawURLEncoding)
 	path := this.topDir + string(os.PathSeparator) + code
 	if err := os.MkdirAll(path, this.dirMode); err != nil {
 		panic(err)
@@ -67,7 +68,7 @@ func (this *DirectoryQueue) Recede(ticket interface{}) {
 		return
 	}
 
-	m, err := findMFile(this.fsdb, "code="+string(dirTick))
+	m, err := findMFile(this.fsdb, "code='"+string(dirTick)+"'")
 	if err != nil {
 		log.Println(err.Error())
 

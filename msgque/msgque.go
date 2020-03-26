@@ -1,56 +1,23 @@
 package msgque
 
 import (
-	"devtools/code"
 	"devtools/comerr"
 	"time"
 )
+
+const (
+	def_max_buffer int           = 6
+	def_timeout    time.Duration = time.Second
+)
+
+type Callback interface {
+}
 
 type Message interface {
 	Id() interface{}
 	Type() interface{}
 	Callback(cbMsg interface{}, timeout time.Duration) bool
 }
-
-type Ticket interface {
-	Threads() int
-	Generate() interface{}
-	Retrieve() interface{}
-	Recede(ticket interface{})
-}
-
-type TicketQueue struct {
-	maxThrds int
-	tickets  chan interface{}
-}
-
-func NewTicketQueue(maxThrds int) *TicketQueue {
-	return &TicketQueue{
-		maxThrds: maxThrds,
-		tickets:  make(chan interface{}, maxThrds),
-	}
-}
-
-func (this *TicketQueue) Threads() int {
-	return this.maxThrds
-}
-
-func (this *TicketQueue) Generate() interface{} {
-	return code.RandBase64(16)
-}
-
-func (this *TicketQueue) Retrieve() interface{} {
-	return <-this.tickets
-}
-
-func (this *TicketQueue) Recede(ticket interface{}) {
-	this.tickets <- ticket
-}
-
-const (
-	def_max_buffer int           = 6
-	def_timeout    time.Duration = time.Second
-)
 
 type FanoutHandler func(ticket interface{}, msg Message)
 
