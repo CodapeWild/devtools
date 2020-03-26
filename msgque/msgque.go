@@ -63,9 +63,7 @@ func NewMessageQueue(opt ...MessageQueueSetting) *MessageQueue {
 }
 
 func (this *MessageQueue) StartUp(fanout FanoutHandler) {
-	for i := 0; i < this.Threads(); i++ {
-		this.Recede(this.Generate())
-	}
+	this.Fill()
 
 	go func() {
 		for v := range this.msgChan {

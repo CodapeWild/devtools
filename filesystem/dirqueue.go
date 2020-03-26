@@ -5,6 +5,7 @@ import (
 	"devtools/idflaker"
 	"devtools/msgque"
 	"encoding/base64"
+	"fmt"
 	"log"
 	"os"
 )
@@ -17,13 +18,14 @@ const (
 
 type DirectoryQueue struct {
 	*msgque.TicketQueue
-	topDir  string
-	dirMode os.FileMode
-	idflk   *idflaker.IdFlaker
-	fsdb    *sql.DB
+	topDir      string
+	maxContains int
+	dirMode     os.FileMode
+	idflk       *idflaker.IdFlaker
+	fsdb        *sql.DB
 }
 
-func NewDirectoryQueue(topDir string, dirMode os.FileMode, idflk *idflaker.IdFlaker, fsdb *sql.DB, maxThrds int) *DirectoryQueue {
+func NewDirectoryQueue(topDir string, maxContains int, dirMode os.FileMode, idflk *idflaker.IdFlaker, fsdb *sql.DB, maxThrds int) *DirectoryQueue {
 	if maxThrds <= 0 {
 		maxThrds = def_max_threads
 	}
@@ -31,9 +33,24 @@ func NewDirectoryQueue(topDir string, dirMode os.FileMode, idflk *idflaker.IdFla
 	return &DirectoryQueue{
 		TicketQueue: msgque.NewTicketQueue(maxThrds),
 		topDir:      topDir,
+		maxContains: maxContains,
 		dirMode:     dirMode,
 		idflk:       idflk,
 		fsdb:        fsdb,
+	}
+}
+
+func (this *DirectoryQueue) Fill() {
+	cs, err := findDirCodes(this.fsdb, fmt.Sprintf("is_dir=1 and contains<%d limit %d", this.maxContains, this.Threads()))
+	if err != nil {
+		panic(err)
+	}
+
+	for _, v := range cs {
+		this.Recede(DirectoryTicket(v))
+	}
+	for i := 0; i < this.Threads()-len(cs); i++ {
+		this.Recede(this.Generate())
 	}
 }
 

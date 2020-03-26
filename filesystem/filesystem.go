@@ -24,7 +24,7 @@ const (
 	Def_File_Mode    os.FileMode = 0744
 	Def_Max_Contains             = 3
 	Def_FSDB_Path                = "./fs.db"
-	def_fstab_file               = "tab_file"
+	def_tab_mfile                = "tab_file"
 )
 
 type File struct {
@@ -127,7 +127,7 @@ func NewFileSystem(opt ...FileSystemSetting) (*FileSystem, error) {
 		return nil, err
 	}
 
-	fs.MessageQueue = msgque.NewMessageQueue(msgque.SetTicket(NewDirectoryQueue(fs.topDir, fs.dirMode, fs.idflk, fs.fsdb, 6)), msgque.SetQueueBuffer(6), msgque.SetQueueTimeout(time.Second))
+	fs.MessageQueue = msgque.NewMessageQueue(msgque.SetTicket(NewDirectoryQueue(fs.topDir, fs.maxContains, fs.dirMode, fs.idflk, fs.fsdb, 6)), msgque.SetQueueBuffer(6), msgque.SetQueueTimeout(time.Second))
 	fs.MessageQueue.StartUp(fs.fileMsgFanout)
 
 	return fs, nil

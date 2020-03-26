@@ -72,34 +72,34 @@ func (this *MFile) Sys() interface{} {
 }
 
 func createTable(db *sql.DB) error {
-	_, err := db.Exec(fmt.Sprintf("create table if not exists '%s' (code text primary key, dir_code text, is_dir integer, path text unique, origin_name text, contains integer, mode integer, size integer, media integer, span integer, created integer, updated integer, state integer)\n", def_fstab_file))
+	_, err := db.Exec(fmt.Sprintf("create table if not exists '%s' (code text primary key, dir_code text, is_dir integer, path text unique, origin_name text, contains integer, mode integer, size integer, media integer, span integer, created integer, updated integer, state integer)\n", def_tab_mfile))
 	if err != nil {
 		return err
 	}
 
-	if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_path_index' on '%s' (path)\n", def_fstab_file, def_fstab_file)); err != nil {
+	if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_path_index' on '%s' (path)\n", def_tab_mfile, def_tab_mfile)); err != nil {
 		return err
 	}
-	if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_contains_index' on '%s' (contains asc)\n", def_fstab_file, def_fstab_file)); err != nil {
+	if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_contains_index' on '%s' (contains asc)\n", def_tab_mfile, def_tab_mfile)); err != nil {
 		return err
 	}
-	if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_created_index' on '%s' (created desc)\n", def_fstab_file, def_fstab_file)); err != nil {
+	if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_created_index' on '%s' (created desc)\n", def_tab_mfile, def_tab_mfile)); err != nil {
 		return err
 	}
-	_, err = db.Exec(fmt.Sprintf("create index if not exists '%s_updated_index' on '%s' (updated desc)\n", def_fstab_file, def_fstab_file))
+	_, err = db.Exec(fmt.Sprintf("create index if not exists '%s_updated_index' on '%s' (updated desc)\n", def_tab_mfile, def_tab_mfile))
 
 	return err
 }
 
 func findMFile(db *sql.DB, where string) (*MFile, error) {
-	row := db.QueryRow(fmt.Sprintf("select * from '%s' where %s\n", def_fstab_file, where))
+	row := db.QueryRow(fmt.Sprintf("select * from '%s' where %s\n", def_tab_mfile, where))
 	m := &MFile{}
 
 	return m, row.Scan(&m.Code, &m.DirCode, &m.IsDirectory, &m.Path, &m.OriginalName, &m.Contains, &m.FileMode, &m.FileSize, &m.Media, &m.Span, &m.Created, &m.Updated, &m.State)
 }
 
 func findMFiles(db *sql.DB, where string) ([]os.FileInfo, error) {
-	rows, err := db.Query(fmt.Sprintf("select * from '%s' where %s\n", def_fstab_file, where))
+	rows, err := db.Query(fmt.Sprintf("select * from '%s' where %s\n", def_tab_mfile, where))
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +116,24 @@ func findMFiles(db *sql.DB, where string) ([]os.FileInfo, error) {
 	return ms, nil
 }
 
+func findDirCodes(db *sql.DB, where string) ([]string, error) {
+	rows, err := db.Query(fmt.Sprintf("select code from '%s' where %s\n", def_tab_mfile, where))
+	if err != nil {
+		return nil, err
+	}
+
+	var cs []string
+	for rows.Next() {
+		s := ""
+		if err = rows.Scan(&s); err != nil {
+			return nil, err
+		}
+		cs = append(cs, s)
+	}
+
+	return cs, nil
+}
+
 func updateContains(db *sql.DB, dir string, v int) error {
 	m, err := findMFile(db, "code='"+dir+"'")
 	if err != nil {
@@ -130,7 +148,7 @@ func updateContains(db *sql.DB, dir string, v int) error {
 		v = 0
 	}
 
-	stmt, err := db.Prepare(fmt.Sprintf("update '%s' set contains=%d where code='%s'", def_fstab_file, v, dir))
+	stmt, err := db.Prepare(fmt.Sprintf("update '%s' set contains=%d where code='%s'", def_tab_mfile, v, dir))
 	if err != nil {
 		return err
 	}
@@ -147,7 +165,7 @@ func updateContains(db *sql.DB, dir string, v int) error {
 }
 
 func insertMFile(db *sql.DB, mfile *MFile) error {
-	stmt, err := db.Prepare(fmt.Sprintf("insert into '%s' values(?,?,?,?,?,?,?,?,?,?,?,?,?)", def_fstab_file))
+	stmt, err := db.Prepare(fmt.Sprintf("insert into '%s' values(?,?,?,?,?,?,?,?,?,?,?,?,?)", def_tab_mfile))
 	if err != nil {
 		return err
 	}
@@ -175,9 +193,9 @@ func deleteMFile(db *sql.DB, code string) error {
 	}
 
 	if m.IsDirectory {
-		_, err = db.Exec(fmt.Sprintf("delete from '%s' where code='%s' and dir_code='%s'", def_fstab_file, m.Code, m.Code))
+		_, err = db.Exec(fmt.Sprintf("delete from '%s' where code='%s' and dir_code='%s'", def_tab_mfile, m.Code, m.Code))
 	} else {
-		if _, err = db.Exec(fmt.Sprintf("delete from '%s' where code='%s'", def_fstab_file, m.Code)); err == nil {
+		if _, err = db.Exec(fmt.Sprintf("delete from '%s' where code='%s'", def_tab_mfile, m.Code)); err == nil {
 			err = updateContains(db, m.DirCode, -1)
 		}
 	}

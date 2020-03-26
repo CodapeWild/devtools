@@ -4,6 +4,7 @@ import "devtools/code"
 
 type Ticket interface {
 	Threads() int
+	Fill()
 	Generate() interface{}
 	Retrieve() interface{}
 	Recede(ticket interface{})
@@ -23,6 +24,12 @@ func NewTicketQueue(maxThrds int) *TicketQueue {
 
 func (this *TicketQueue) Threads() int {
 	return this.maxThrds
+}
+
+func (this *TicketQueue) Fill() {
+	for i := 0; i < this.Threads(); i++ {
+		this.Recede(this.Generate())
+	}
 }
 
 func (this *TicketQueue) Generate() interface{} {
