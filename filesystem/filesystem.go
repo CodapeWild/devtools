@@ -165,12 +165,12 @@ func (this *FileSystem) Open(s string) (http.File, error) {
 func (this *FileSystem) openWithPath(filePath string) (http.File, error) {
 	if filePath == "/" {
 		if this.listFiles {
-			if f, err := this.Dir.Open(filePath); err != nil {
+			if f, err := this.Dir.Open(filePath); err == nil {
+				return &File{File: f, path: filePath, showHidden: this.showHidden, showForbidden: this.showForbidden, fsdb: this.fsdb}, nil
+			} else {
 				log.Println(err.Error())
 
 				return nil, os.ErrInvalid
-			} else {
-				return &File{File: f, path: filePath, showHidden: this.showHidden, showForbidden: this.showForbidden, fsdb: this.fsdb}, nil
 			}
 		} else {
 			return nil, os.ErrPermission
@@ -188,12 +188,12 @@ func (this *FileSystem) openWithPath(filePath string) (http.File, error) {
 		return nil, os.ErrPermission
 	}
 
-	if f, err := this.Dir.Open(m.Path); err != nil {
+	if f, err := this.Dir.Open(m.Path); err == nil {
+		return &File{File: f, path: m.Path, showHidden: this.showHidden, showForbidden: this.showForbidden, fsdb: this.fsdb}, nil
+	} else {
 		log.Println(err.Error())
 
 		return nil, os.ErrInvalid
-	} else {
-		return &File{File: f, path: m.Path, showHidden: this.showHidden, showForbidden: this.showForbidden, fsdb: this.fsdb}, nil
 	}
 }
 
@@ -214,41 +214,14 @@ func (this *FileSystem) openWithCode(code string) (http.File, error) {
 		return nil, os.ErrPermission
 	}
 
-	if f, err := this.Dir.Open(m.Path); err != nil {
+	if f, err := this.Dir.Open(m.Path); err == nil {
+		return &File{File: f, path: m.Path, showHidden: this.showHidden, showForbidden: this.showForbidden, fsdb: this.fsdb}, nil
+	} else {
 		log.Println(err.Error())
 
 		return nil, os.ErrInvalid
-	} else {
-		return &File{File: f, path: m.Path, showHidden: this.showHidden, showForbidden: this.showForbidden, fsdb: this.fsdb}, nil
 	}
 }
-
-// func (this *FileSystem) Open(filePath string) (http.File, error) {
-// 	log.Println("open file")
-// 	codes := strings.Split(strings.TrimRight(filePath, "/"), "/")
-// 	if len(codes) > 2 || len(codes) < 1 {
-// 		return nil, os.ErrInvalid
-// 	}
-
-// 	m, err := findMFile(this.fsdb, "path='"+filePath+"'")
-// 	if err != nil {
-// 		log.Println(err.Error())
-
-// 		return nil, os.ErrNotExist
-// 	}
-
-// 	if (m.IsDirectory && !this.listFiles) || (m.State == File_Hidden && !this.showHidden) || (m.State == File_Forbidden && !this.showForbidden) {
-// 		return nil, os.ErrPermission
-// 	}
-
-// 	if f, err := this.Dir.Open(filePath); err != nil {
-// 		log.Println(err.Error())
-
-// 		return nil, os.ErrInvalid
-// 	} else {
-// 		return &File{File: f, fsdb: this.fsdb, showHidden: this.showHidden, showForbidden: this.showForbidden}, nil
-// 	}
-// }
 
 func (this *FileSystem) fileMsgFanout(ticket interface{}, msg msgque.Message) {
 	switch msg.Type() {
