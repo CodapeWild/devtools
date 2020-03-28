@@ -6,8 +6,8 @@ type Ticket interface {
 	Threads() int
 	Fill()
 	Generate() interface{}
-	Retrieve() interface{}
-	Recede(ticket interface{})
+	Fetch() interface{}
+	Restore(ticket interface{})
 }
 
 type TicketQueue struct {
@@ -28,18 +28,18 @@ func (this *TicketQueue) Threads() int {
 
 func (this *TicketQueue) Fill() {
 	for i := 0; i < this.Threads(); i++ {
-		this.Recede(this.Generate())
+		this.Restore(this.Generate())
 	}
 }
 
 func (this *TicketQueue) Generate() interface{} {
-	return code.RandBase64(16)
+	return code.RandBase64(15)
 }
 
-func (this *TicketQueue) Retrieve() interface{} {
+func (this *TicketQueue) Fetch() interface{} {
 	return <-this.tickets
 }
 
-func (this *TicketQueue) Recede(ticket interface{}) {
+func (this *TicketQueue) Restore(ticket interface{}) {
 	this.tickets <- ticket
 }

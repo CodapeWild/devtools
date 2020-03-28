@@ -141,7 +141,7 @@ func NewFileSystem(opt ...FileSystemSetting) (*FileSystem, error) {
 		return nil, err
 	}
 
-	fs.MessageQueue = msgque.NewMessageQueue(msgque.SetTicket(NewDirectoryQueue(fs.topDir, fs.maxContains, fs.dirMode, fs.idflk, fs.fsdb, 6)), msgque.SetQueueBuffer(6), msgque.SetQueueTimeout(time.Second))
+	fs.MessageQueue = msgque.NewMessageQueue(msgque.SetTicket(NewDirectoryQueue(fs.topDir, fs.maxContains, fs.dirMode, fs.idflk, fs.fsdb, 6)), msgque.SetQueueBuffer(6), msgque.SetSendTimeout(time.Second))
 	fs.MessageQueue.StartUp(fs.fileMsgFanout)
 
 	return fs, nil
@@ -223,6 +223,10 @@ func (this *FileSystem) openWithCode(code string) (http.File, error) {
 	}
 }
 
+// func (this *FileSystem) Send(msg msgque.Message) {
+// 	this.MessageQueue.Send(msg)
+// }
+
 func (this *FileSystem) fileMsgFanout(ticket interface{}, msg msgque.Message) {
 	switch msg.Type() {
 	case Save_File:
@@ -253,37 +257,28 @@ func (this *FileSystem) saveFile(ticket interface{}, msg *SaveFileMsg) {
 
 	err := insertMFile(this.fsdb, m)
 	if err != nil {
-		if msg.CbChan != nil {
-			callback(msg, File_Opt_Failed, err, 1)
-		}
+		msg.Put(&FileSysCallbackMsg{MsgId: msg.MsgId, State: FileSys_Proc_Failed, Err: err})
 
 		return
 	}
 
 	f, err := os.OpenFile(this.topDir+path, os.O_CREATE|os.O_WRONLY, this.fileMode)
 	if err != nil {
-		if msg.CbChan != nil {
-			callback(msg, File_Opt_Failed, err, 1)
-		}
+		msg.Put(&FileSysCallbackMsg{MsgId: msg.MsgId, State: FileSys_Proc_Failed, Err: err})
 
 		return
 	}
-	_, err = f.Write(msg.Buf)
-	if msg.CbChan != nil {
-		if err != nil {
-			callback(msg, File_Opt_Failed, err, 1)
-		} else {
-			callback(msg, File_Opt_Success, nil, 1)
-		}
+	if _, err = f.Write(msg.Buf); err != nil {
+		msg.Put(&FileSysCallbackMsg{MsgId: msg.MsgId, State: FileSys_Proc_Failed, Err: err})
+	} else {
+		msg.Put(&FileSysCallbackMsg{MsgId: msg.MsgId, State: FileSys_Proc_Success})
 	}
 }
 
 func (this *FileSystem) deleteFile(msg *DeleteFileMsg) {
 	err := deleteMFile(this.fsdb, msg.Code)
 	if err != nil {
-		if msg.CbChan != nil {
-			callback(msg, File_Opt_Failed, err, 1)
-		}
+		msg.Put(&FileSysCallbackMsg{MsgId: msg.MsgId, State: FileSys_Proc_Failed, Err: err})
 
 		return
 	}
@@ -293,20 +288,9 @@ func (this *FileSystem) deleteFile(msg *DeleteFileMsg) {
 		path = "/" + msg.DirCode + path
 	}
 	path = this.topDir + path
-	err = os.RemoveAll(path)
-	if msg.CbChan != nil {
-		if err != nil {
-			callback(msg, File_Opt_Failed, err, 1)
-		} else {
-			callback(msg, File_Opt_Success, nil, 1)
-		}
+	if err = os.RemoveAll(path); err != nil {
+		msg.Put(&FileSysCallbackMsg{MsgId: msg.MsgId, State: FileSys_Proc_Failed, Err: err})
+	} else {
+		msg.Put(&FileSysCallbackMsg{MsgId: msg.MsgId, State: FileSys_Proc_Success})
 	}
-}
-
-func callback(msg msgque.Message, state int, err error, timeout time.Duration) {
-	msg.Callback(&FileCallbackMsg{
-		MsgId: msg.Id().(string),
-		State: state,
-		Err:   err,
-	}, 1)
 }

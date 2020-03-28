@@ -1,172 +1,89 @@
 package msgque
 
 import (
-	"devtools/code"
-	"errors"
 	"log"
+	"math/rand"
 	"testing"
 	"time"
 )
 
-type FooMsgType int
-
 const (
-	Foo1 FooMsgType = iota + 1
-	Foo2
+	fm1 = "foomsg1"
+	fm2 = "foomsg2"
 )
 
-type Foo1Msg struct {
-	MsgId string
-	CbC   chan interface{}
+type FooMsg1 struct {
+	MsgId int
+	Callback
 }
 
-func (this *Foo1Msg) Id() interface{} {
+func (this *FooMsg1) Id() interface{} {
 	return this.MsgId
 }
 
-func (this *Foo1Msg) Type() interface{} {
-	return Foo1
+func (this *FooMsg1) Type() interface{} {
+	return fm1
 }
 
-func (this *Foo1Msg) Callback(cbMsg interface{}, timeout time.Duration) bool {
-	select {
-	case <-time.After(timeout):
-		return false
-	case this.CbC <- cbMsg:
-		return true
-	}
+type FooMsg2 struct {
+	MsgId int
+	Callback
 }
 
-type Foo2Msg struct {
-	MsgId string
-	CbC   chan interface{}
-}
-
-func (this *Foo2Msg) Id() interface{} {
+func (this *FooMsg2) Id() interface{} {
 	return this.MsgId
 }
 
-func (this *Foo2Msg) Type() interface{} {
-	return Foo2
+func (this *FooMsg2) Type() interface{} {
+	return fm2
 }
 
-func (this *Foo2Msg) Callback(cbMsg interface{}, timeout time.Duration) bool {
-	select {
-	case <-time.After(timeout):
-		return false
-	case this.CbC <- cbMsg:
-		return true
-	}
-}
-
-type FooCbMsg struct {
-	MsgId      string
-	MsgState   int
-	Err        error
-	MsgPayload interface{}
-}
-
-func (this *FooCbMsg) Id() interface{} {
-	return this.MsgId
-}
-
-func (this *FooCbMsg) State() interface{} {
-	return this.MsgState
-}
-
-func (this *FooCbMsg) Error() error {
-	return this.Err
-}
-
-func (this *FooCbMsg) Payload() interface{} {
-	return this.Payload
-}
-
-type FooTicket struct {
-	Code   string
-	Expire int
-}
-
-type FooTicketQueue struct {
-	*TicketQueue
-}
-
-func (this *FooTicketQueue) Generate() interface{} {
-	return &FooTicket{
-		Code:   code.RandBase64(15),
-		Expire: 6,
-	}
-}
-
-func (this *FooTicketQueue) Recede(ticket interface{}) {
-	ftick, ok := ticket.(*FooTicket)
-	if !ok {
-		return
-	}
-
-	if ftick.Expire <= 0 {
-		return
-	}
-	ftick.Expire--
-
-	this.TicketQueue.Recede(ftick)
-}
-
-var count int = 0
-
-func FooFanout(ticket interface{}, msg Message) {
-	count++
+func fooMsgFanout(ticket interface{}, msg Message) {
 	switch msg.Type() {
-	case Foo1:
-		log.Println("******Foo1******")
-		msg.Callback(&FooCbMsg{
-			MsgId:      msg.Id().(string),
-			MsgState:   200,
-			Err:        nil,
-			MsgPayload: nil,
-		}, 6)
-	case Foo2:
-		log.Println("******Foo2******")
-		msg.Callback(&FooCbMsg{
-			MsgId:      msg.Id().(string),
-			MsgState:   404,
-			Err:        errors.New("can not found page"),
-			MsgPayload: nil,
-		}, 3)
-	default:
+	case fm1:
+		log.Println("foomsg1:", msg.Id())
+		if msg.Put("process foomsg1 success") {
+			log.Println("foomsg1 callback success")
+		}
+	case fm2:
+		log.Println("foomsg2:", msg.Id())
+		if msg.Put("process foomsg2 success") {
+			log.Println("foomsg2 callback success")
+		}
 	}
 }
 
-func TestMsgQ(t *testing.T) {
-	ftickQ := &FooTicketQueue{NewTicketQueue(3)}
-	msgQ := NewMessageQueue(SetTicket(ftickQ), SetQueueBuffer(6), SetQueueTimeout(time.Second))
-	msgQ.StartUp(FooFanout)
+func TestMsgQue(t *testing.T) {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	go func() {
-		for {
-			cbc := make(chan interface{})
-			msgQ.Send(&Foo1Msg{MsgId: code.RandBase64(9), CbC: cbc})
-			log.Println(<-cbc)
-			time.Sleep(time.Second)
+	msgq := NewMessageQueue(SetTicket(NewTicketQueue(6)))
+	msgq.StartUp(fooMsgFanout)
+
+	for {
+		if rand.Intn(100) > 49 {
+			fm1 := &FooMsg1{
+				MsgId:    rand.Intn(1000),
+				Callback: NewCallbackQueue(time.Second),
+			}
+			if err := msgq.Send(fm1); err != nil {
+				log.Println(err.Error())
+
+				return
+			}
+			log.Println(fm1.Wait())
+		} else {
+			fm2 := &FooMsg2{
+				MsgId:    rand.Intn(1000),
+				Callback: NewCallbackQueue(time.Second),
+			}
+			if err := msgq.Send(fm2); err != nil {
+				log.Println(err.Error())
+
+				return
+			}
+			log.Println(fm2.Wait())
 		}
-	}()
 
-	go func() {
-		for {
-			cbc := make(chan interface{})
-			msgQ.Send(&Foo2Msg{MsgId: code.RandBase64(9), CbC: cbc})
-			log.Println(<-cbc)
-			time.Sleep(time.Second)
-		}
-	}()
-
-	go func() {
-		for {
-			log.Println(count)
-			time.Sleep(3 * time.Second)
-		}
-	}()
-	log.Println("###############", count)
-
-	select {}
+		time.Sleep(time.Second)
+	}
 }

@@ -1,7 +1,7 @@
 package filesystem
 
 import (
-	"time"
+	"devtools/msgque"
 )
 
 const (
@@ -10,19 +10,19 @@ const (
 )
 
 const (
-	File_Opt_Success int = iota + 1
-	File_Opt_Failed
+	FileSys_Proc_Success int = iota + 1
+	FileSys_Proc_Failed
 )
 
 type SaveFileMsg struct {
-	MsgId  string
-	Name   string
-	Buf    []byte
-	Size   int64
-	Media  MediaType
-	Span   int64
-	State  int
-	CbChan chan interface{}
+	MsgId string
+	Name  string
+	Buf   []byte
+	Size  int64
+	Media MediaType
+	Span  int64
+	State int
+	msgque.Callback
 }
 
 func (this *SaveFileMsg) Id() interface{} {
@@ -33,24 +33,11 @@ func (this *SaveFileMsg) Type() interface{} {
 	return Save_File
 }
 
-func (this *SaveFileMsg) Callback(cbMsg interface{}, timeout time.Duration) bool {
-	if this.CbChan != nil {
-		select {
-		case <-time.After(timeout):
-			return false
-		case this.CbChan <- cbMsg:
-			return true
-		}
-	}
-
-	return false
-}
-
 type DeleteFileMsg struct {
 	MsgId   string
 	Code    string
 	DirCode string
-	CbChan  chan interface{}
+	msgque.Callback
 }
 
 func (this *DeleteFileMsg) Id() interface{} {
@@ -61,20 +48,7 @@ func (this *DeleteFileMsg) Type() interface{} {
 	return Del_File
 }
 
-func (this *DeleteFileMsg) Callback(cbMsg interface{}, timeout time.Duration) bool {
-	if this.CbChan != nil {
-		select {
-		case <-time.After(timeout):
-			return false
-		case this.CbChan <- cbMsg:
-			return true
-		}
-	}
-
-	return false
-}
-
-type FileCallbackMsg struct {
+type FileSysCallbackMsg struct {
 	MsgId string
 	State int
 	Err   error

@@ -17,12 +17,12 @@ const (
 )
 
 type DirectoryQueue struct {
-	*msgque.TicketQueue
 	topDir      string
 	maxContains int
 	dirMode     os.FileMode
 	idflk       *idflaker.IdFlaker
 	fsdb        *sql.DB
+	msgque.Ticket
 }
 
 func NewDirectoryQueue(topDir string, maxContains int, dirMode os.FileMode, idflk *idflaker.IdFlaker, fsdb *sql.DB, maxThrds int) *DirectoryQueue {
@@ -31,12 +31,12 @@ func NewDirectoryQueue(topDir string, maxContains int, dirMode os.FileMode, idfl
 	}
 
 	return &DirectoryQueue{
-		TicketQueue: msgque.NewTicketQueue(maxThrds),
 		topDir:      topDir,
 		maxContains: maxContains,
 		dirMode:     dirMode,
 		idflk:       idflk,
 		fsdb:        fsdb,
+		Ticket:      msgque.NewTicketQueue(maxThrds),
 	}
 }
 
@@ -47,10 +47,10 @@ func (this *DirectoryQueue) Fill() {
 	}
 
 	for _, v := range cs {
-		this.Recede(DirectoryTicket(v))
+		this.Restore(DirectoryTicket(v))
 	}
 	for i := 0; i < this.Threads()-len(cs); i++ {
-		this.Recede(this.Generate())
+		this.Restore(this.Generate())
 	}
 }
 
@@ -79,7 +79,7 @@ func (this *DirectoryQueue) Generate() interface{} {
 	return DirectoryTicket(code)
 }
 
-func (this *DirectoryQueue) Recede(ticket interface{}) {
+func (this *DirectoryQueue) Restore(ticket interface{}) {
 	dirTick, ok := ticket.(DirectoryTicket)
 	if !ok {
 		return
@@ -93,8 +93,8 @@ func (this *DirectoryQueue) Recede(ticket interface{}) {
 	}
 
 	if m.Contains >= this.maxContains {
-		this.TicketQueue.Recede(this.Generate())
+		this.Ticket.Restore(this.Generate())
 	} else {
-		this.TicketQueue.Recede(dirTick)
+		this.Ticket.Restore(dirTick)
 	}
 }
