@@ -2,9 +2,9 @@ package filesystem
 
 import (
 	"database/sql"
-	"devtools/comerr"
 	"fmt"
 	"os"
+	"qrpool/common/comerr"
 	"time"
 )
 
@@ -143,47 +143,34 @@ func updateContains(db *sql.DB, dir string, v int) error {
 		return comerr.ParamInvalid
 	}
 
-	v = m.Contains + v
+	v += m.Contains
 	if v < 0 {
 		v = 0
 	}
 
-	stmt, err := db.Prepare(fmt.Sprintf("update '%s' set contains=%d where code='%s'", def_tab_mfile, v, dir))
+	stmt, err := db.Prepare(fmt.Sprintf("update '%s' set contains=%d where code='%s'\n", def_tab_mfile, v, dir))
 	if err != nil {
 		return err
 	}
+	_, err = stmt.Exec()
 
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	if _, err = tx.Stmt(stmt).Exec(); err != nil {
-		return err
-	}
-
-	return tx.Commit()
+	return err
 }
 
-func insertMFile(db *sql.DB, mfile *MFile) error {
-	stmt, err := db.Prepare(fmt.Sprintf("insert into '%s' values(?,?,?,?,?,?,?,?,?,?,?,?,?)", def_tab_mfile))
+func insertMFile(db *sql.DB, m *MFile) error {
+	stmt, err := db.Prepare(fmt.Sprintf("insert into '%s' values(?,?,?,?,?,?,?,?,?,?,?,?,?)\n", def_tab_mfile))
 	if err != nil {
 		return err
 	}
 
-	tx, err := db.Begin()
-	if err != nil {
+	if _, err = stmt.Exec(m.Code, m.DirCode, m.IsDirectory, m.Path, m.OriginalName, m.Contains, m.FileMode, m.FileSize, m.Media, m.Span, time.Now().Unix(), 0, m.State); err != nil {
 		return err
 	}
-	if _, err = tx.Stmt(stmt).Exec(mfile.Code, mfile.DirCode, mfile.IsDirectory, mfile.Path, mfile.OriginalName, mfile.Contains, mfile.FileMode, mfile.FileSize, mfile.Media, mfile.Span, time.Now().Unix(), 0, mfile.State); err != nil {
-		return err
-	}
-	if !mfile.IsDirectory {
-		if err = updateContains(db, mfile.DirCode, 1); err != nil {
-			return err
-		}
+	if !m.IsDirectory {
+		err = updateContains(db, m.DirCode, 1)
 	}
 
-	return tx.Commit()
+	return err
 }
 
 func deleteMFile(db *sql.DB, code string) error {
@@ -194,11 +181,26 @@ func deleteMFile(db *sql.DB, code string) error {
 
 	if m.IsDirectory {
 		_, err = db.Exec(fmt.Sprintf("delete from '%s' where code='%s' and dir_code='%s'", def_tab_mfile, m.Code, m.Code))
-	} else {
-		if _, err = db.Exec(fmt.Sprintf("delete from '%s' where code='%s'", def_tab_mfile, m.Code)); err == nil {
-			err = updateContains(db, m.DirCode, -1)
-		}
+
+		return err
 	}
 
-	return err
+	stmt, err := db.Prepare(fmt.Sprintf("delete from '%s' where code='%s'", def_tab_mfile, m.Code))
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.Stmt(stmt).Exec(); err == nil {
+		err = updateContains(db, m.DirCode, -1)
+	}
+	if err != nil {
+		tx.Rollback()
+	}
+
+	return tx.Commit()
 }

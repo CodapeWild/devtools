@@ -62,8 +62,8 @@ func (this *DirectoryQueue) Generate() interface{} {
 	}()
 
 	code := this.idflk.NextBase64Id(base64.RawURLEncoding)
-	path := this.topDir + string(os.PathSeparator) + code
-	if err := os.MkdirAll(path, this.dirMode); err != nil {
+	path := string(os.PathSeparator) + code
+	if err := os.Mkdir(this.topDir+path, this.dirMode); err != nil {
 		panic(err)
 	}
 	if err := insertMFile(this.fsdb, &MFile{
@@ -92,7 +92,7 @@ func (this *DirectoryQueue) Recede(ticket interface{}) {
 		return
 	}
 
-	if m.Contains >= Def_Max_Contains {
+	if m.Contains >= this.maxContains {
 		this.TicketQueue.Recede(this.Generate())
 	} else {
 		this.TicketQueue.Recede(dirTick)

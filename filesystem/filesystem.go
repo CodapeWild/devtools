@@ -18,30 +18,19 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const (
-	Def_Top_Dir                  = "./upload"
-	Def_Dir_Mode     os.FileMode = 0744
-	Def_File_Mode    os.FileMode = 0744
-	Def_Max_Contains             = 3
-	Def_FSDB_Path                = "./fs.db"
-	def_tab_mfile                = "tab_file"
-)
-
 type File struct {
 	http.File
-	fsdb                      *sql.DB
+	path                      string
 	showHidden, showForbidden bool
+	fsdb                      *sql.DB
 }
 
 func (this File) Readdir(count int) ([]os.FileInfo, error) {
-	finfo, err := this.Stat()
-	if err != nil {
-		log.Println(err.Error())
-
-		return nil, os.ErrInvalid
-	}
-	if !finfo.IsDir() {
-		return nil, os.ErrInvalid
+	var where string
+	if this.path == "/" {
+		where += "is_dir=1"
+	} else {
+		where += "dir_code='" + this.path[1:] + "'"
 	}
 
 	fstate := strconv.Itoa(File_Normal)
@@ -49,18 +38,36 @@ func (this File) Readdir(count int) ([]os.FileInfo, error) {
 		fstate += "," + strconv.Itoa(File_Hidden)
 	}
 	if this.showForbidden {
-		fstate += "." + strconv.Itoa(File_Forbidden)
+		fstate += "," + strconv.Itoa(File_Forbidden)
 	}
 
-	return findMFiles(this.fsdb, fmt.Sprintf("dir_code='%s' and state in(%s) order by created desc group by is_dir", finfo.Name(), fstate))
+	return findMFiles(this.fsdb, where+fmt.Sprintf(" and state in(%s) order by created desc limit %d\n", fstate, count))
 }
+
+type OpenTag int
+
+const (
+	Open_WithPath = iota + 1
+	Open_WithCode
+)
+
+const (
+	Def_Top_Dir                  = "./upload"
+	Def_Dir_Mode     os.FileMode = 0744
+	Def_File_Mode    os.FileMode = 0744
+	Def_Max_Contains             = 3
+	Def_Open_Tag                 = Open_WithPath
+	Def_FSDB_Path                = "./fs.db"
+	def_tab_mfile                = "tab_file"
+)
 
 type FileSystem struct {
 	http.Dir
 	topDir                               string
-	listFiles, showHidden, showForbidden bool
 	maxContains                          int
 	dirMode, fileMode                    os.FileMode
+	openTag                              OpenTag
+	listFiles, showHidden, showForbidden bool
 	fsdbPath                             string
 	fsdb                                 *sql.DB
 	idflk                                *idflaker.IdFlaker
@@ -69,20 +76,26 @@ type FileSystem struct {
 
 type FileSystemSetting func(fs *FileSystem)
 
-func SetAccessibility(listFiles, showHidden, showForbidden bool) FileSystemSetting {
-	return func(fs *FileSystem) {
-		fs.listFiles = listFiles
-		fs.showHidden = showHidden
-		fs.showForbidden = showForbidden
-	}
-}
-
 func SetDirProperties(topDir string, maxContains int, dirMode, fileMode os.FileMode) FileSystemSetting {
 	return func(fs *FileSystem) {
 		fs.topDir = topDir
 		fs.maxContains = maxContains
 		fs.dirMode = dirMode
 		fs.fileMode = fileMode
+	}
+}
+
+func SetOpenTag(tag OpenTag) FileSystemSetting {
+	return func(fs *FileSystem) {
+		fs.openTag = tag
+	}
+}
+
+func SetAccessibility(listFiles, showHidden, showForbidden bool) FileSystemSetting {
+	return func(fs *FileSystem) {
+		fs.listFiles = listFiles
+		fs.showHidden = showHidden
+		fs.showForbidden = showForbidden
 	}
 }
 
@@ -94,13 +107,14 @@ func SetFSDBPath(dbPath string) FileSystemSetting {
 
 func NewFileSystem(opt ...FileSystemSetting) (*FileSystem, error) {
 	fs := &FileSystem{
-		listFiles:     true,
-		showHidden:    false,
-		showForbidden: false,
 		topDir:        Def_Top_Dir,
 		maxContains:   Def_Max_Contains,
 		dirMode:       Def_Dir_Mode,
 		fileMode:      Def_File_Mode,
+		openTag:       Def_Open_Tag,
+		listFiles:     true,
+		showHidden:    false,
+		showForbidden: false,
 		fsdbPath:      Def_FSDB_Path,
 	}
 	for _, v := range opt {
@@ -133,35 +147,108 @@ func NewFileSystem(opt ...FileSystemSetting) (*FileSystem, error) {
 	return fs, nil
 }
 
-func (this *FileSystem) Open(filePath string) (http.File, error) {
-	codes := strings.Split(strings.TrimRight(filePath, "/"), "/")
-	if len(codes) > 2 || len(codes) < 1 {
+func (this *FileSystem) Open(s string) (http.File, error) {
+	if len(strings.TrimSpace(s)) == 0 {
 		return nil, os.ErrInvalid
+	}
+
+	switch this.openTag {
+	case Open_WithPath:
+		return this.openWithPath(s)
+	case Open_WithCode:
+		return this.openWithCode(s)
+	default:
+		return nil, os.ErrInvalid
+	}
+}
+
+func (this *FileSystem) openWithPath(filePath string) (http.File, error) {
+	if filePath == "/" {
+		if this.listFiles {
+			if f, err := this.Dir.Open(filePath); err != nil {
+				log.Println(err.Error())
+
+				return nil, os.ErrInvalid
+			} else {
+				return &File{File: f, path: filePath, showHidden: this.showHidden, showForbidden: this.showForbidden, fsdb: this.fsdb}, nil
+			}
+		} else {
+			return nil, os.ErrPermission
+		}
 	}
 
 	m, err := findMFile(this.fsdb, "path='"+filePath+"'")
 	if err != nil {
 		log.Println(err.Error())
 
-		return nil, os.ErrNotExist
+		return nil, os.ErrInvalid
 	}
 
 	if (m.IsDirectory && !this.listFiles) || (m.State == File_Hidden && !this.showHidden) || (m.State == File_Forbidden && !this.showForbidden) {
 		return nil, os.ErrPermission
 	}
 
-	if f, err := this.Dir.Open(filePath); err != nil {
+	if f, err := this.Dir.Open(m.Path); err != nil {
 		log.Println(err.Error())
 
 		return nil, os.ErrInvalid
 	} else {
-		return &File{File: f, fsdb: this.fsdb, showHidden: this.showHidden, showForbidden: this.showForbidden}, nil
+		return &File{File: f, path: m.Path, showHidden: this.showHidden, showForbidden: this.showForbidden, fsdb: this.fsdb}, nil
 	}
 }
 
-func (this *FileSystem) Send(msg msgque.Message) error {
-	return this.MessageQueue.Send(msg)
+func (this *FileSystem) openWithCode(code string) (http.File, error) {
+	code = strings.Trim(code, "/")
+	if len(code) != 11 {
+		return nil, os.ErrInvalid
+	}
+
+	m, err := findMFile(this.fsdb, "code='"+code+"'")
+	if err != nil {
+		log.Println(err.Error())
+
+		return nil, os.ErrInvalid
+	}
+
+	if (m.IsDirectory && !this.listFiles) || (m.State == File_Hidden && !this.showHidden) || (m.State == File_Forbidden && !this.showForbidden) {
+		return nil, os.ErrPermission
+	}
+
+	if f, err := this.Dir.Open(m.Path); err != nil {
+		log.Println(err.Error())
+
+		return nil, os.ErrInvalid
+	} else {
+		return &File{File: f, path: m.Path, showHidden: this.showHidden, showForbidden: this.showForbidden, fsdb: this.fsdb}, nil
+	}
 }
+
+// func (this *FileSystem) Open(filePath string) (http.File, error) {
+// 	log.Println("open file")
+// 	codes := strings.Split(strings.TrimRight(filePath, "/"), "/")
+// 	if len(codes) > 2 || len(codes) < 1 {
+// 		return nil, os.ErrInvalid
+// 	}
+
+// 	m, err := findMFile(this.fsdb, "path='"+filePath+"'")
+// 	if err != nil {
+// 		log.Println(err.Error())
+
+// 		return nil, os.ErrNotExist
+// 	}
+
+// 	if (m.IsDirectory && !this.listFiles) || (m.State == File_Hidden && !this.showHidden) || (m.State == File_Forbidden && !this.showForbidden) {
+// 		return nil, os.ErrPermission
+// 	}
+
+// 	if f, err := this.Dir.Open(filePath); err != nil {
+// 		log.Println(err.Error())
+
+// 		return nil, os.ErrInvalid
+// 	} else {
+// 		return &File{File: f, fsdb: this.fsdb, showHidden: this.showHidden, showForbidden: this.showForbidden}, nil
+// 	}
+// }
 
 func (this *FileSystem) fileMsgFanout(ticket interface{}, msg msgque.Message) {
 	switch msg.Type() {
@@ -177,7 +264,7 @@ func (this *FileSystem) fileMsgFanout(ticket interface{}, msg msgque.Message) {
 func (this *FileSystem) saveFile(ticket interface{}, msg *SaveFileMsg) {
 	code := this.idflk.NextBase64Id(base64.RawURLEncoding)
 	dirCode := string(ticket.(DirectoryTicket))
-	path := fmt.Sprintf("/%s/%s", code, dirCode)
+	path := fmt.Sprintf("/%s/%s", dirCode, code)
 	m := &MFile{
 		Code:         code,
 		DirCode:      dirCode,
