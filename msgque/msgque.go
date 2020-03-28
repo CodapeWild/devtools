@@ -2,7 +2,6 @@ package msgque
 
 import (
 	"devtools/comerr"
-	"log"
 	"time"
 )
 
@@ -27,8 +26,6 @@ func (this *CallbackQueue) Put(msg interface{}) bool {
 	if this.cbChan != nil {
 		select {
 		case <-time.After(this.timeout):
-			log.Println("put callback msg timeout")
-
 			return false
 		case this.cbChan <- msg:
 			return true
@@ -39,10 +36,11 @@ func (this *CallbackQueue) Put(msg interface{}) bool {
 }
 
 func (this *CallbackQueue) Wait() (msg interface{}) {
-	select {
-	case <-time.After(this.timeout):
-		log.Println("wait callback msg timeout")
-	case msg = <-this.cbChan:
+	if this.cbChan != nil {
+		select {
+		case <-time.After(this.timeout):
+		case msg = <-this.cbChan:
+		}
 	}
 
 	return
