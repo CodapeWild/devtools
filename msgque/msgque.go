@@ -105,11 +105,10 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 
 	go func() {
 		for v := range this.msgChan {
-			tick := this.Fetch()
 			go func(tick interface{}, msg Message) {
 				fanout(tick, msg)
 				this.Restore(tick)
-			}(tick, v)
+			}(this.Fetch(), v)
 		}
 	}()
 }

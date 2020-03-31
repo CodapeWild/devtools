@@ -11,23 +11,23 @@ type StdStatus struct {
 }
 
 var (
-	StateSuccess = &StdStatus{Status: 0, Msg: "success"}
+	StateSuccess = &StdStatus{Status: 1, Msg: "success"}
 )
 
 var (
-	StateServiceAccessBlocked = &StdStatus{Status: 1, Msg: "service access blocked"}
-	StateParseParamFailed     = &StdStatus{Status: 2, Msg: "parse parameter failed"}
-	StateParamInvalid         = &StdStatus{Status: 3, Msg: "invalid parameter for request"}
-	StateProcessTimeout       = &StdStatus{Status: 4, Msg: "processing timeout"}
-	StateProcessError         = &StdStatus{Status: 5, Msg: "processing error"}
-	StateDataNotFound         = &StdStatus{Status: 6, Msg: "data can not find"}
-	StateDataVerifyFailed     = &StdStatus{Status: 7, Msg: "data verification failed"}
-	StateDataAccessBlocked    = &StdStatus{Status: 8, Msg: "data access blocked"}
-	StateDataModifyForbidden  = &StdStatus{Status: 9, Msg: "data modification forbidden"}
-	StateDataExpired          = &StdStatus{Status: 10, Msg: "data expired"}
-	StateDataSizeInvalid      = &StdStatus{Status: 11, Msg: "data size invalid"}
-	StateDataTypeInvalid      = &StdStatus{Status: 12, Msg: "data type invalid"}
-	StateDataMediaInvalid     = &StdStatus{Status: 13, Msg: "data media invalid"}
+	StateServiceAccessBlocked = &StdStatus{Status: 2, Msg: "service access blocked"}
+	StateParseParamFailed     = &StdStatus{Status: 3, Msg: "parse parameter failed"}
+	StateParamInvalid         = &StdStatus{Status: 4, Msg: "invalid parameter for request"}
+	StateProcessTimeout       = &StdStatus{Status: 5, Msg: "processing timeout"}
+	StateProcessError         = &StdStatus{Status: 6, Msg: "processing error"}
+	StateDataNotFound         = &StdStatus{Status: 7, Msg: "data can not find"}
+	StateDataVerifyFailed     = &StdStatus{Status: 8, Msg: "data verification failed"}
+	StateDataAccessBlocked    = &StdStatus{Status: 9, Msg: "data access blocked"}
+	StateDataModifyForbidden  = &StdStatus{Status: 10, Msg: "data modification forbidden"}
+	StateDataExpired          = &StdStatus{Status: 11, Msg: "data expired"}
+	StateDataSizeInvalid      = &StdStatus{Status: 12, Msg: "data size invalid"}
+	StateDataTypeInvalid      = &StdStatus{Status: 13, Msg: "data type invalid"}
+	StateDataMediaInvalid     = &StdStatus{Status: 14, Msg: "data media invalid"}
 )
 
 type StdResp struct {
