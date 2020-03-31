@@ -268,6 +268,8 @@ func (this *FileSystem) saveFile(ticket interface{}, msg *SaveFileMsg) {
 
 		return
 	}
+	defer f.Close()
+
 	if _, err = f.Write(msg.Buf); err != nil {
 		msg.Put(&FileSysCallbackMsg{MsgId: msg.MsgId, State: FileSys_Proc_Failed, Err: err})
 	} else {
