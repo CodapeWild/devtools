@@ -9,13 +9,9 @@ type Callback interface {
 
 type NoCallback struct{}
 
-func (this NoCallback) Put(msg interface{}) bool {
-	return false
-}
+func (this NoCallback) Put(msg interface{}) bool { return false }
 
-func (this NoCallback) Wait() interface{} {
-	return nil
-}
+func (this NoCallback) Wait() interface{} { return nil }
 
 type CallbackQueue struct {
 	cbChan  chan interface{}
