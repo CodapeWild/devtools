@@ -5,47 +5,6 @@ import (
 	"time"
 )
 
-type Callback interface {
-	Put(msg interface{}) bool
-	Wait() (msg interface{})
-}
-
-type CallbackQueue struct {
-	cbChan  chan interface{}
-	timeout time.Duration
-}
-
-func NewCallbackQueue(timeout time.Duration) *CallbackQueue {
-	return &CallbackQueue{
-		cbChan:  make(chan interface{}),
-		timeout: timeout,
-	}
-}
-
-func (this *CallbackQueue) Put(msg interface{}) bool {
-	if this.cbChan != nil {
-		select {
-		case <-time.After(this.timeout):
-			return false
-		case this.cbChan <- msg:
-			return true
-		}
-	}
-
-	return false
-}
-
-func (this *CallbackQueue) Wait() (msg interface{}) {
-	if this.cbChan != nil {
-		select {
-		case <-time.After(this.timeout):
-		case msg = <-this.cbChan:
-		}
-	}
-
-	return
-}
-
 const (
 	def_que_buffer   int           = 6
 	def_send_timeout time.Duration = time.Second
