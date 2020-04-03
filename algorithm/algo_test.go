@@ -42,15 +42,15 @@ func TestQuickLocate(t *testing.T) {
 }
 
 func TestTrie(t *testing.T) {
-	// generate trie
-	// words := []TrieWord{TrieString("a"), TrieString("ab"), TrieString("abc")}
-	words := []TrieWord{TrieString("abc"), TrieString("ab"), TrieString("abcd")}
-	// words := []TrieWord{TrieString("abc"), TrieString("adc"), TrieString("a")}
-	root := NewTrieRoot(NewTrieNode(TrieString("")))
-	log.Printf("total %d words added into trie\n", root.Add(words...))
-	// show trie
-	ShowTrie(root.TrieNode)
-	// find node
-	found := root.Find(TrieString("ab"))
-	log.Println(found)
+	root1 := NewTrieNode(TrieString(""), 0, nil)
+	root1.Add(TrieString("abc"), TrieString("ab"), TrieString("a"))
+	ShowTrie(root1)
+	log.Println("###################")
+	root2 := NewTrieNode(TrieString("a"), 1, nil)
+	root2.Add(TrieString("ab"), TrieString("abc"))
+	ShowTrie(root2)
+	log.Println("###################")
+	root3 := NewTrieNode(TrieString("abc"), 1, nil)
+	root3.Add(TrieString("ab"), TrieString("a"), TrieString("abc"), TrieString("abcdxy"))
+	ShowTrie(root3)
 }

@@ -113,11 +113,10 @@ func Distinct(input []string) []string {
 	return output[:j]
 }
 
-func CommonPrefixLen(s1, s2 string) int {
-	var i, l1, l2 = 0, len(s1), len(s2)
-	for i < l1 && i < l2 && s1[i] == s2[i] {
-		i++
+func CommonPrefix(s1, s2 string) string {
+	var i = 0
+	for ; i < len(s1) && i < len(s2) && s1[i] == s2[i]; i++ {
 	}
 
-	return i
+	return s1[:i]
 }

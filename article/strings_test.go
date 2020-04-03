@@ -12,6 +12,6 @@ func TestStrings(t *testing.T) {
 }
 
 func TestCommonPrefixLen(t *testing.T) {
-	log.Println(CommonPrefixLen("123", "132"))
-	log.Println(CommonPrefixLen("123", "0132"))
+	log.Println(CommonPrefix("123", "132"))
+	log.Println(CommonPrefix("123", "0132"))
 }

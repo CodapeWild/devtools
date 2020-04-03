@@ -2,7 +2,10 @@ package algorithm
 
 import (
 	"devtools/article"
+	"io"
 	"log"
+	"qrpool/common/comerr"
+	"strings"
 )
 
 type TrieWord interface {
@@ -32,9 +35,8 @@ func (this TrieString) IsPrefixOf(other TrieWord) bool {
 }
 
 func (this TrieString) SplitCommonPrefix(other TrieWord) (commonPrefix, left TrieWord) {
-	i := article.CommonPrefixLen(this.String(), other.String())
-	commonPrefix = TrieString(this.String()[:i])
-	left = TrieString(this.String()[i:])
+	commonPrefix = TrieString(article.CommonPrefix(this.String(), other.String()))
+	left = TrieString(strings.TrimPrefix(this.String(), commonPrefix.String()))
 
 	return
 }
@@ -45,46 +47,47 @@ type TrieNode struct {
 	Next   []*TrieNode
 }
 
-func NewTrieNode(word TrieWord) *TrieNode {
-	return &TrieNode{Prefix: word}
+func NewTrieNode(word TrieWord, hit int64, next []*TrieNode) *TrieNode {
+	return &TrieNode{
+		Prefix: word,
+		Hit:    hit,
+		Next:   next,
+	}
 }
 
-type TrieRoot struct {
-	*TrieNode
-}
-
-func NewTrieRoot(node *TrieNode) *TrieRoot {
-	return &TrieRoot{node}
-}
-
-func (this *TrieRoot) Add(words ...TrieWord) int {
-	added := 0
+// root's prefix do not split, which means any word has no common prefix word with root can not add into trie
+// unless root's prefix is empty.
+func (this *TrieNode) Add(words ...TrieWord) int {
+	var added = 0
 	for _, word := range words {
 		if word.Len() == 0 {
 			continue
 		}
-		// we supposed that root's prefix can't split if it's not empty then every word can't add into trie
-		// if it do not has a common prefix with the root
+
 		if this.Prefix.Len() != 0 && !this.Prefix.IsPrefixOf(word) {
 			continue
 		}
 
-		if addIntoTrie(this.TrieNode, word) {
-			added++
+		_, left := word.SplitCommonPrefix(this.Prefix)
+		if left.Len() == 0 {
+			this.Hit++
+			continue
 		}
+		addIntoTrie(this, left)
+		added++
 	}
 
 	return added
 }
 
-func (this *TrieRoot) Remove(words ...TrieWord) int {
-	removed := 0
+func (this *TrieNode) Remove(words ...TrieWord) int {
+	var removed = 0
 	for _, word := range words {
 		if word.Len() == 0 {
 			continue
 		}
 
-		if node := this.Find(word); node != nil {
+		if node, ok := this.Find(word); ok {
 			node.Hit = 0
 			removed++
 		}
@@ -93,23 +96,21 @@ func (this *TrieRoot) Remove(words ...TrieWord) int {
 	return removed
 }
 
-func (this *TrieRoot) Find(word TrieWord) *TrieNode {
-	// we supposed that root's prefix can't split if it's not empty then every word can't add into trie
-	// if it has't a common prefix with the root
+func (this *TrieNode) Find(word TrieWord) (*TrieNode, bool) {
 	if this.Prefix.Len() != 0 && !this.Prefix.IsPrefixOf(word) {
-		return nil
+		return nil, false
 	}
 
 	var (
-		cursor  = this.TrieNode
-		_, left = word.SplitCommonPrefix(cursor.Prefix)
+		_, left = word.SplitCommonPrefix(this.Prefix)
+		found   = false
 	)
 	for left.Len() != 0 {
-		found := false
-		for _, node := range cursor.Next {
+		found = false
+		for _, node := range this.Next {
 			if node.Prefix.IsPrefixOf(left) {
 				_, left = left.SplitCommonPrefix(node.Prefix)
-				cursor = node
+				this = node
 				found = true
 				break
 			}
@@ -119,71 +120,75 @@ func (this *TrieRoot) Find(word TrieWord) *TrieNode {
 		}
 	}
 
-	if left.Len() == 0 && cursor.Hit > 0 {
-		return cursor
+	if left.Len() == 0 && this.Hit > 0 {
+		return this, true
 	} else {
-		return nil
+		return nil, false
 	}
 }
 
-func addIntoTrie(cursor *TrieNode, word TrieWord) bool {
-	if word.Equal(cursor.Prefix) {
-		cursor.Hit++
+func addIntoTrie(cursor *TrieNode, word TrieWord) {
+	var found = false
+	for _, node := range cursor.Next {
+		if word.Equal(node.Prefix) {
+			node.Hit++
 
-		return true
-	}
-
-	var (
-		cpx, left = word.SplitCommonPrefix(cursor.Prefix)
-		added     = false
-	)
-	if cpx.Len() == cursor.Prefix.Len() {
-		found := false
-		for _, node := range cursor.Next {
-			if cpx, _ = left.SplitCommonPrefix(node.Prefix); cpx.Len() != 0 {
-				addIntoTrie(node, left)
-				found = true
-				break
-			}
-		}
-		if !found {
-			nn := NewTrieNode(left)
-			nn.Hit++
-			cursor.Next = append(cursor.Next, nn)
+			return
 		}
 
-		added = true
-	} else if cpx.Len() < cursor.Prefix.Len() {
-		_, cursorLeft := cursor.Prefix.SplitCommonPrefix(cpx)
-		ln := NewTrieNode(cursorLeft)
-		ln.Hit = cursor.Hit
-		ln.Next = cursor.Next
+		compfx, left := word.SplitCommonPrefix(node.Prefix)
+		if compfx.Len() == 0 {
+			continue
+		}
 
-		cursor.Prefix = cpx
-		if left.Len() != 0 {
-			rn := NewTrieNode(left)
-			rn.Hit++
-			if cursor.Hit > 0 {
-				cursor.Hit--
-			}
-			cursor.Next = []*TrieNode{ln, rn}
+		if node.Prefix.Len() == compfx.Len() {
+			cursor = node
+			word = left
+			found = true
+			break
 		} else {
-			cursor.Hit = 1
-			cursor.Next = []*TrieNode{ln}
-		}
+			_, nl := node.Prefix.SplitCommonPrefix(compfx)
+			node.Prefix = compfx
+			n := NewTrieNode(nl, node.Hit, node.Next)
+			node.Hit = 0
+			node.Next = []*TrieNode{n}
+			if left.Len() == 0 {
+				node.Hit++
+			} else {
+				node.Next = append(node.Next, NewTrieNode(left, 1, nil))
+			}
 
-		added = true
+			return
+		}
 	}
 
-	return added
+	if !found {
+		cursor.Next = append(cursor.Next, NewTrieNode(word, 1, nil))
+	} else {
+		addIntoTrie(cursor, word)
+	}
 }
 
 func ShowTrie(cursor *TrieNode) {
-	if cursor == nil {
-		return
-	}
-	log.Printf("prefix:%s hit: %d", cursor.Prefix.String(), cursor.Hit)
+	log.Printf("prefix:%s hit:%d next:%d\n", cursor.Prefix.String(), cursor.Hit, len(cursor.Next))
 	for _, node := range cursor.Next {
 		ShowTrie(node)
 	}
+}
+
+type TrieJson []struct {
+	Prefix string `json:"prefix"`
+	Hit    int64  `json:"hit"`
+}
+
+func TrieToJson(root *TrieNode, w io.Writer) error {
+	if root == nil || w == nil {
+		return comerr.ParamInvalid
+	}
+
+	return nil
+}
+
+func TrieFromJson(r io.Reader) (root *TrieNode, err error) {
+	return nil, nil
 }
