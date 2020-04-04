@@ -2,9 +2,11 @@ package algorithm
 
 import (
 	"devtools/article"
+	"devtools/comerr"
+	"encoding/json"
 	"io"
+	"io/ioutil"
 	"log"
-	"qrpool/common/comerr"
 	"strings"
 )
 
@@ -176,19 +178,60 @@ func ShowTrie(cursor *TrieNode) {
 	}
 }
 
-type TrieJson []struct {
-	Prefix string `json:"prefix"`
-	Hit    int64  `json:"hit"`
+type TrieNodeJson struct {
+	Word string `json:"word"`
+	Hit  int64  `json:"hit"`
 }
 
+type TrieJson []TrieNodeJson
+
 func TrieToJson(root *TrieNode, w io.Writer) error {
-	if root == nil || w == nil {
-		return comerr.ParamInvalid
+	var tj TrieJson
+	traverse(root, "", &tj)
+
+	buf, err := json.Marshal(tj)
+	if err != nil {
+		return err
 	}
 
-	return nil
+	_, err = w.Write(buf)
+
+	return err
+}
+
+func traverse(cursor *TrieNode, word string, out *TrieJson) {
+	word += cursor.Prefix.String()
+	if cursor.Hit > 0 {
+		*out = append(*out, TrieNodeJson{Word: word, Hit: cursor.Hit})
+	}
+	for _, node := range cursor.Next {
+		traverse(node, word, out)
+	}
 }
 
 func TrieFromJson(r io.Reader) (root *TrieNode, err error) {
-	return nil, nil
+	buf, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	var tj = TrieJson{}
+	if err = json.Unmarshal(buf, &tj); err != nil {
+		return nil, err
+	}
+	if len(tj) == 0 {
+		return nil, comerr.DataEmpty
+	}
+
+	root = NewTrieNode(TrieString(tj[0].Word), tj[0].Hit, nil)
+	for _, node := range tj {
+		root.Add(TrieString(node.Word))
+		if n, ok := root.Find(TrieString(node.Word)); !ok {
+			return nil, comerr.ProcessFailed
+		} else {
+			n.Hit = node.Hit
+		}
+	}
+
+	return
 }

@@ -2,6 +2,7 @@ package algorithm
 
 import (
 	"log"
+	"os"
 	"sort"
 	"testing"
 )
@@ -42,15 +43,37 @@ func TestQuickLocate(t *testing.T) {
 }
 
 func TestTrie(t *testing.T) {
-	root1 := NewTrieNode(TrieString(""), 0, nil)
+	root1 := NewTrieNode(TrieString(""), 1, nil)
 	root1.Add(TrieString("abc"), TrieString("ab"), TrieString("a"))
 	ShowTrie(root1)
 	log.Println("###################")
+
 	root2 := NewTrieNode(TrieString("a"), 1, nil)
 	root2.Add(TrieString("ab"), TrieString("abc"))
 	ShowTrie(root2)
 	log.Println("###################")
+
 	root3 := NewTrieNode(TrieString("abc"), 1, nil)
 	root3.Add(TrieString("ab"), TrieString("a"), TrieString("abc"), TrieString("abcdxy"))
 	ShowTrie(root3)
+	log.Println("###################")
+
+	f, err := os.OpenFile("./trie_root1.json", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0744)
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	log.Println(TrieToJson(root1, f))
+	f.Close()
+	log.Println("###################")
+
+	f, err = os.OpenFile("./trie_root1.json", os.O_RDONLY, 0644)
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	root1fromjson, err := TrieFromJson(f)
+	f.Close()
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	ShowTrie(root1fromjson)
 }
