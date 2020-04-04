@@ -58,15 +58,15 @@ func TestTrie(t *testing.T) {
 	ShowTrie(root3)
 	log.Println("###################")
 
-	f, err := os.OpenFile("./trie_root1.json", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0744)
+	f, err := os.OpenFile("./trie_root2.json", os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0744)
 	if err != nil {
 		log.Panicln(err.Error())
 	}
-	log.Println(TrieToJson(root1, f))
+	log.Println(TrieToJson(root2, f))
 	f.Close()
 	log.Println("###################")
 
-	f, err = os.OpenFile("./trie_root1.json", os.O_RDONLY, 0644)
+	f, err = os.OpenFile("./trie_root2.json", os.O_RDONLY, 0644)
 	if err != nil {
 		log.Panicln(err.Error())
 	}
