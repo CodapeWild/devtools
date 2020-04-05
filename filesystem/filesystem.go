@@ -58,7 +58,6 @@ const (
 	Def_Max_Contains             = 3
 	Def_Open_Tag                 = Open_WithPath
 	Def_FSDB_Path                = "./fs.db"
-	def_tab_mfile                = "tab_file"
 )
 
 type FileSystem struct {

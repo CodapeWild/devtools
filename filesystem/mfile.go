@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+const def_tab_mfile = "tab_file"
+
 type MediaType int
 
 const (
