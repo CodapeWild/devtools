@@ -44,7 +44,7 @@ func (this *FooMsg2) Type() interface{} {
 }
 
 func (this *FooMsg2) MustFetch() bool {
-	return true
+	return false
 }
 
 func fooMsgFanout(ticket interface{}, msg Message) {
@@ -87,6 +87,7 @@ func TestMsgQue(t *testing.T) {
 
 				return
 			}
+			log.Println("send fm1")
 			log.Println(fm1.Wait())
 		} else {
 			fm2 := &FooMsg2{
@@ -98,6 +99,7 @@ func TestMsgQue(t *testing.T) {
 
 				return
 			}
+			log.Println("send fm2")
 			log.Println(fm2.Wait())
 		}
 

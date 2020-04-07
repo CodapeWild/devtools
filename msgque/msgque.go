@@ -71,11 +71,12 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 	go func() {
 		for v := range this.msgChan {
 			if this.suspending {
-				log.Println(comerr.Suspending.Error())
+				log.Println("message queue suspending")
 				<-this.resume
-				log.Println("process resumed")
+				log.Println("message queue resumed")
 			}
 
+			log.Println(v.MustFetch())
 			if v.MustFetch() {
 				go func(ticket interface{}, msg Message) {
 					fanout(ticket, msg)
@@ -92,13 +93,10 @@ func (this *MessageQueue) Send(msg Message) error {
 	select {
 	case <-time.After(this.sendTimeout):
 		if this.suspending {
-			select {
-			case this.msgChan <- msg:
-				return nil
-			}
+			return this.Send(msg)
+		} else {
+			return comerr.Overtime
 		}
-
-		return comerr.Overtime
 	case this.msgChan <- msg:
 		return nil
 	}
@@ -109,6 +107,6 @@ func (this *MessageQueue) Suspend() {
 }
 
 func (this *MessageQueue) Resume() {
-	this.suspending = false
 	this.resume <- 1
+	this.suspending = false
 }

@@ -14,6 +14,5 @@ var (
 	ConnectFailed     = errors.New("connecting failed")
 	NotFound          = errors.New("not found")
 	Overtime          = errors.New("process overtime")
-	Suspending        = errors.New("process suspending")
 	ProcessFailed     = errors.New("process failed")
 )

@@ -5,14 +5,13 @@ import (
 )
 
 const (
-	save_file_msg = iota + 1
+	save_file_msg int = iota + 1
 	find_file_msg
 	del_file_msg
 )
 
 type SaveMsg struct {
-	Name string
-	Buf  []byte
+	Buf []byte
 	*msgque.CallbackQueue
 }
 
@@ -62,8 +61,19 @@ func (this *DelMsg) MustFetch() bool {
 	return false
 }
 
+const (
+	filesys_success int = iota + 1
+	filesys_failed
+)
+
 type CallbackMsg struct {
 	Status  int
 	Msg     string
 	Payload interface{}
+}
+
+type SaveCbMsg struct {
+	FId  string
+	DId  string
+	Path string
 }
