@@ -1,45 +1,56 @@
 package msgque
 
-import "devtools/code"
+import (
+	"devtools/code"
+)
 
-type Ticket interface {
+type TicketQueue interface {
 	Threads() int
 	Fill()
 	Generate() interface{}
 	Fetch() interface{}
 	Restore(ticket interface{})
+	Traverse(process func(ticket interface{}))
 }
 
-type TicketQueue struct {
+type SimpleTicketQueue struct {
 	maxThrds int
 	tickets  chan interface{}
 }
 
-func NewTicketQueue(maxThrds int) *TicketQueue {
-	return &TicketQueue{
+func NewSimpleTicketQueue(maxThrds int) *SimpleTicketQueue {
+	return &SimpleTicketQueue{
 		maxThrds: maxThrds,
 		tickets:  make(chan interface{}, maxThrds),
 	}
 }
 
-func (this *TicketQueue) Threads() int {
+func (this *SimpleTicketQueue) Threads() int {
 	return this.maxThrds
 }
 
-func (this *TicketQueue) Fill() {
-	for i := 0; i < this.Threads(); i++ {
+func (this *SimpleTicketQueue) Fill() {
+	for i := len(this.tickets); i < this.Threads(); i++ {
 		this.Restore(this.Generate())
 	}
 }
 
-func (this *TicketQueue) Generate() interface{} {
+func (this *SimpleTicketQueue) Generate() interface{} {
 	return code.RandBase64(15)
 }
 
-func (this *TicketQueue) Fetch() interface{} {
+func (this *SimpleTicketQueue) Fetch() interface{} {
 	return <-this.tickets
 }
 
-func (this *TicketQueue) Restore(ticket interface{}) {
+func (this *SimpleTicketQueue) Restore(ticket interface{}) {
 	this.tickets <- ticket
+}
+
+func (this *SimpleTicketQueue) Traverse(process func(ticket interface{})) {
+	for i := 0; i < len(this.tickets); i++ {
+		ticket := <-this.tickets
+		process(ticket)
+		this.tickets <- ticket
+	}
 }

@@ -3,6 +3,7 @@ package msgque
 import (
 	"log"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 )
@@ -25,6 +26,10 @@ func (this *FooMsg1) Type() interface{} {
 	return fm1
 }
 
+func (this *FooMsg1) MustFetch() bool {
+	return true
+}
+
 type FooMsg2 struct {
 	MsgId int
 	Callback
@@ -36,6 +41,10 @@ func (this *FooMsg2) Id() interface{} {
 
 func (this *FooMsg2) Type() interface{} {
 	return fm2
+}
+
+func (this *FooMsg2) MustFetch() bool {
+	return true
 }
 
 func fooMsgFanout(ticket interface{}, msg Message) {
@@ -54,10 +63,18 @@ func fooMsgFanout(ticket interface{}, msg Message) {
 }
 
 func TestMsgQue(t *testing.T) {
+	log.SetOutput(os.Stdout)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	msgq := NewMessageQueue(SetTicket(NewTicketQueue(6)))
+	msgq := NewMessageQueue(SetTicket(NewSimpleTicketQueue(6)))
 	msgq.StartUp(fooMsgFanout)
+
+	go func() {
+		time.Sleep(3 * time.Second)
+		msgq.Suspend()
+		time.Sleep(30 * time.Second)
+		msgq.Resume()
+	}()
 
 	for {
 		if rand.Intn(100) > 49 {
