@@ -114,7 +114,15 @@ func (this *FileQueue) Send(msg msgque.Message) error {
 }
 
 func (this *FileQueue) Close() {
+	this.MessageQueue.Close()
+	this.Traverse(func(ticket interface{}) bool {
+		dirTick := ticket.(*DirTicket)
+		if err := updateDirCap(this.fqdb, dirTick.Dir, dirTick.Capacity); err != nil {
+			log.Println(err.Error())
+		}
 
+		return false
+	})
 }
 
 func (this *FileQueue) fileFanout(ticket interface{}, msg msgque.Message) {
@@ -280,6 +288,5 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 			return found
 		})
 
-		if !
 	}
 }

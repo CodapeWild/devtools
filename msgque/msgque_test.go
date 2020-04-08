@@ -79,6 +79,7 @@ func TestMsgQue(t *testing.T) {
 	go func() {
 		time.Sleep(9 * time.Second)
 		msgq.Close()
+		log.Println("message queue closed")
 	}()
 
 	for {

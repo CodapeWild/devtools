@@ -72,6 +72,12 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 
 	go func() {
 		for v := range this.msgChan {
+			if v == nil {
+				close(this.msgChan)
+
+				return
+			}
+
 			if this.suspending {
 				log.Println("message queue suspending")
 				<-this.resume
@@ -91,6 +97,10 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 }
 
 func (this *MessageQueue) Send(msg Message) error {
+	if msg == nil {
+		return comerr.ParamInvalid
+	}
+
 	select {
 	case <-this.closer:
 		return comerr.ChannelClosed
@@ -122,5 +132,6 @@ func (this *MessageQueue) Resume() {
 
 func (this *MessageQueue) Close() {
 	close(this.closer)
-	close(this.msgChan)
+	this.msgChan <- nil
+	<-this.msgChan
 }
