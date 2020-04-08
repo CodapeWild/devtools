@@ -2,6 +2,7 @@ package filesys
 
 import (
 	"devtools/msgque"
+	"os"
 )
 
 const (
@@ -11,7 +12,9 @@ const (
 )
 
 type SaveMsg struct {
-	Buf []byte
+	Buf      []byte
+	fileMode os.FileMode
+	Ext      string
 	*msgque.CallbackQueue
 }
 
@@ -76,4 +79,12 @@ type SaveCbMsg struct {
 	FId  string
 	DId  string
 	Path string
+}
+
+type FindCbMsg struct {
+	FId      string
+	DId      string
+	IsDir    bool
+	Capacity int
+	Path     string
 }

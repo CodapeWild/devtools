@@ -15,4 +15,5 @@ var (
 	NotFound          = errors.New("not found")
 	Overtime          = errors.New("process overtime")
 	ProcessFailed     = errors.New("process failed")
+	ChannelClosed     = errors.New("channel closed")
 )

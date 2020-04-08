@@ -5,12 +5,12 @@ import (
 )
 
 type TicketQueue interface {
-	Threads() int
+	MaxThreads() int
 	Fill()
 	Generate() interface{}
 	Fetch() interface{}
 	Restore(ticket interface{})
-	Traverse(process func(ticket interface{}))
+	Traverse(eachWithBreak func(ticket interface{}) bool)
 }
 
 type SimpleTicketQueue struct {
@@ -25,12 +25,12 @@ func NewSimpleTicketQueue(maxThrds int) *SimpleTicketQueue {
 	}
 }
 
-func (this *SimpleTicketQueue) Threads() int {
+func (this *SimpleTicketQueue) MaxThreads() int {
 	return this.maxThrds
 }
 
 func (this *SimpleTicketQueue) Fill() {
-	for i := len(this.tickets); i < this.Threads(); i++ {
+	for i := len(this.tickets); i < this.MaxThreads(); i++ {
 		this.Restore(this.Generate())
 	}
 }
@@ -47,10 +47,12 @@ func (this *SimpleTicketQueue) Restore(ticket interface{}) {
 	this.tickets <- ticket
 }
 
-func (this *SimpleTicketQueue) Traverse(process func(ticket interface{})) {
+func (this *SimpleTicketQueue) Traverse(eachWithBreak func(ticket interface{}) bool) {
 	for i := 0; i < len(this.tickets); i++ {
 		ticket := <-this.tickets
-		process(ticket)
+		if eachWithBreak(ticket) {
+			return
+		}
 		this.tickets <- ticket
 	}
 }
