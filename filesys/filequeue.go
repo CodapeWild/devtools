@@ -114,7 +114,7 @@ func (this *FileQueue) Send(msg msgque.Message) error {
 }
 
 func (this *FileQueue) Close() {
-	this.Suspend()
+
 }
 
 func (this *FileQueue) fileFanout(ticket interface{}, msg msgque.Message) {

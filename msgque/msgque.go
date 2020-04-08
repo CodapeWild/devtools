@@ -27,6 +27,7 @@ type MessageQueue struct {
 	sendTimeout time.Duration
 	suspending  bool
 	resume      chan int
+	closer      chan int
 }
 
 type MessageQueueSetting func(msgQ *MessageQueue)
@@ -55,6 +56,7 @@ func NewMessageQueue(opt ...MessageQueueSetting) *MessageQueue {
 		sendTimeout: def_send_timeout,
 		suspending:  false,
 		resume:      make(chan int),
+		closer:      make(chan int),
 	}
 	for _, v := range opt {
 		v(msgQ)
@@ -76,7 +78,6 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 				log.Println("message queue resumed")
 			}
 
-			log.Println(v.MustFetch())
 			if v.MustFetch() {
 				go func(ticket interface{}, msg Message) {
 					fanout(ticket, msg)
@@ -91,6 +92,14 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 
 func (this *MessageQueue) Send(msg Message) error {
 	select {
+	case <-this.closer:
+		return comerr.ChannelClosed
+	default:
+	}
+
+	select {
+	case <-this.closer:
+		return comerr.ChannelClosed
 	case <-time.After(this.sendTimeout):
 		if this.suspending {
 			return this.Send(msg)
@@ -109,4 +118,9 @@ func (this *MessageQueue) Suspend() {
 func (this *MessageQueue) Resume() {
 	this.resume <- 1
 	this.suspending = false
+}
+
+func (this *MessageQueue) Close() {
+	close(this.closer)
+	close(this.msgChan)
 }

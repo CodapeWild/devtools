@@ -72,8 +72,13 @@ func TestMsgQue(t *testing.T) {
 	go func() {
 		time.Sleep(3 * time.Second)
 		msgq.Suspend()
-		time.Sleep(30 * time.Second)
+		time.Sleep(3 * time.Second)
 		msgq.Resume()
+	}()
+
+	go func() {
+		time.Sleep(9 * time.Second)
+		msgq.Close()
 	}()
 
 	for {
