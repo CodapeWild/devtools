@@ -14,7 +14,7 @@ func TestFileQue(t *testing.T) {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	fq, err := NewFileQueue(SetDirectory("./data", 0744, 3), SetDbPath("./data/fq.db"), SetThreads(6, 6), SetTimeout(30))
+	fq, err := NewFileQueue(SetDirectory("./data", 0744, 3), SetDbPath("./data/fq.db"), SetThreads(6, 6), SetTimeout(time.Second))
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -41,7 +41,7 @@ func TestFileQue(t *testing.T) {
 	}
 
 	c := make(chan os.Signal)
-	signal.Notify(c, syscall.SIGINT|syscall.SIGKILL|syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGKILL, syscall.SIGTERM)
 	<-c
 	log.Println("fq closing")
 	fq.Close()

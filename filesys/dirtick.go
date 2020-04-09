@@ -47,7 +47,7 @@ func (this *DirTicketQueue) Fill() {
 	}
 
 	for _, v := range ms {
-		this.Restore(&DirTicket{Dir: v.FId})
+		this.Restore(&DirTicket{Dir: v.FId, Capacity: v.Capacity})
 	}
 	for i := len(ms); i < this.MaxThreads(); i++ {
 		this.Restore(this.Generate())
