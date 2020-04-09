@@ -13,7 +13,7 @@ const (
 
 type SaveMsg struct {
 	Buf      []byte
-	fileMode os.FileMode
+	FileMode os.FileMode
 	Ext      string
 	*msgque.CallbackQueue
 }

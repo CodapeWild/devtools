@@ -32,6 +32,7 @@ func NewDirTicketQueue(maxThrds int, topDir string, dirMode os.FileMode, dirCapa
 
 	return &DirTicketQueue{
 		SimpleTicketQueue: msgque.NewSimpleTicketQueue(maxThrds),
+		topDir:            topDir,
 		dirMode:           dirMode,
 		dirCapacity:       dirCapacity,
 		fqdb:              fqdb,
@@ -41,7 +42,10 @@ func NewDirTicketQueue(maxThrds int, topDir string, dirMode os.FileMode, dirCapa
 
 func (this *DirTicketQueue) Fill() {
 	ms, err := findFiles(this.fqdb, fmt.Sprintf("is_dir=1 and capacity<%d order by capacity asc limit %d", this.dirCapacity, this.MaxThreads()))
-	log.Fatalln(err.Error())
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+
 	for _, v := range ms {
 		this.Restore(&DirTicket{Dir: v.FId})
 	}

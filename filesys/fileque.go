@@ -141,7 +141,7 @@ func (this *FileQueue) fileFanout(ticket interface{}, msg msgque.Message) {
 func (this *FileQueue) saveFile(ticket *DirTicket, msg *SaveMsg) {
 	fid := this.idflk.NextBase64Id(base64.RawURLEncoding)
 	filePath := fmt.Sprintf("%s/%s/%s.%s", this.topDir, ticket.Dir, fid, msg.Ext)
-	err := ioutil.WriteFile(filePath, msg.Buf, msg.fileMode)
+	err := ioutil.WriteFile(filePath, msg.Buf, msg.FileMode)
 	if err != nil {
 		msg.Put(&CallbackMsg{
 			Status: filesys_failed,
