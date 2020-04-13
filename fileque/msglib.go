@@ -1,4 +1,4 @@
-package filesys
+package fileque
 
 import (
 	"devtools/msgque"
@@ -65,8 +65,8 @@ func (this *DelMsg) MustFetch() bool {
 }
 
 const (
-	filesys_success int = iota + 1
-	filesys_failed
+	FileQue_Success int = iota + 1
+	FileQue_Failed
 )
 
 type CallbackMsg struct {

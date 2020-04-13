@@ -2,6 +2,8 @@ package httpext
 
 import (
 	"encoding/json"
+	"errors"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -52,4 +54,21 @@ func (this *StdResp) WriteJson(respw http.ResponseWriter) (n int, err error) {
 	}
 
 	return
+}
+
+func HandleResponse(resp *http.Response, err error) ([]byte, error) {
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
+
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	resp.Body.Close()
+
+	return buf, nil
 }

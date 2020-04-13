@@ -1,4 +1,4 @@
-package filesys
+package fileque
 
 import (
 	"database/sql"
@@ -100,7 +100,7 @@ func NewFileQueue(opt ...FileQueueSetting) (*FileQueue, error) {
 	if err != nil {
 		return nil, err
 	}
-	fq.MessageQueue = msgque.NewMessageQueue(msgque.SetQueueBuffer(fq.qBuf), msgque.SetTicket(dirque), msgque.SetSendTimeout(fq.timeout))
+	fq.MessageQueue = msgque.NewMessageQueue(msgque.SetQueueBuffer(fq.qBuf), msgque.SetTicket(dirque), msgque.SetTimeout(fq.timeout))
 
 	return fq, nil
 }
@@ -144,7 +144,7 @@ func (this *FileQueue) saveFile(ticket *DirTicket, msg *SaveMsg) {
 	err := ioutil.WriteFile(filePath, msg.Buf, msg.FileMode)
 	if err != nil {
 		msg.Put(&CallbackMsg{
-			Status: filesys_failed,
+			Status: FileQue_Failed,
 			Msg:    err.Error(),
 		})
 
@@ -158,7 +158,7 @@ func (this *FileQueue) saveFile(ticket *DirTicket, msg *SaveMsg) {
 	})
 	if err != nil {
 		msg.Put(&CallbackMsg{
-			Status: filesys_failed,
+			Status: FileQue_Failed,
 			Msg:    err.Error(),
 		})
 
@@ -168,7 +168,7 @@ func (this *FileQueue) saveFile(ticket *DirTicket, msg *SaveMsg) {
 	ticket.Capacity++
 
 	msg.Put(&CallbackMsg{
-		Status: filesys_success,
+		Status: FileQue_Success,
 		Payload: &SaveCbMsg{
 			FId:  fid,
 			DId:  ticket.Dir,
@@ -181,12 +181,12 @@ func (this *FileQueue) findFile(msg *FindMsg) {
 	ms, err := findFiles(this.fqdb, "f_id='"+msg.FId+"'")
 	if err != nil {
 		msg.Put(&CallbackMsg{
-			Status: filesys_failed,
+			Status: FileQue_Failed,
 			Msg:    err.Error(),
 		})
 	} else if len(ms) != 1 {
 		msg.Put(&CallbackMsg{
-			Status: filesys_failed,
+			Status: FileQue_Failed,
 			Msg:    comerr.NotFound.Error(),
 		})
 	} else {
@@ -209,7 +209,7 @@ func (this *FileQueue) findFile(msg *FindMsg) {
 				return found
 			})
 			msg.Put(&CallbackMsg{
-				Status: filesys_success,
+				Status: FileQue_Success,
 				Payload: &FindCbMsg{
 					FId:      m.FId,
 					DId:      m.DId,
@@ -220,7 +220,7 @@ func (this *FileQueue) findFile(msg *FindMsg) {
 			})
 		} else {
 			msg.Put(&CallbackMsg{
-				Status: filesys_success,
+				Status: FileQue_Success,
 				Payload: &FindCbMsg{
 					FId:      m.FId,
 					DId:      m.DId,
@@ -237,12 +237,12 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 	ms, err := findFiles(this.fqdb, "f_id='"+msg.FId+"'")
 	if err != nil {
 		msg.Put(&CallbackMsg{
-			Status: filesys_failed,
+			Status: FileQue_Failed,
 			Msg:    err.Error(),
 		})
 	} else if len(ms) != 1 {
 		msg.Put(&CallbackMsg{
-			Status: filesys_failed,
+			Status: FileQue_Failed,
 			Msg:    comerr.NotFound.Error(),
 		})
 	} else {
@@ -255,12 +255,12 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 			if ticket.(*DirTicket).Dir == m.FId {
 				if err = deleteFile(this.fqdb, fmt.Sprintf("f_id='%s' and d_id='%s'", m.FId, m.FId)); err != nil {
 					cbMsg = &CallbackMsg{
-						Status: filesys_failed,
+						Status: FileQue_Failed,
 						Msg:    err.Error(),
 					}
 				} else if err = os.RemoveAll(m.Path); err != nil {
 					cbMsg = &CallbackMsg{
-						Status: filesys_failed,
+						Status: FileQue_Failed,
 						Msg:    err.Error(),
 					}
 				}
@@ -269,12 +269,12 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 				ticket.(*DirTicket).Capacity--
 				if err = deleteFile(this.fqdb, "f_id='"+m.FId+"'"); err != nil {
 					cbMsg = &CallbackMsg{
-						Status: filesys_failed,
+						Status: FileQue_Failed,
 						Msg:    err.Error(),
 					}
 				} else if err = os.Remove(m.Path); err != nil {
 					cbMsg = &CallbackMsg{
-						Status: filesys_failed,
+						Status: FileQue_Failed,
 						Msg:    err.Error(),
 					}
 				}
@@ -290,39 +290,39 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 			return
 		}
 
-		cbMsg = &CallbackMsg{Status: filesys_success}
+		cbMsg = &CallbackMsg{Status: FileQue_Success}
 		if m.IsDir {
 			if err = deleteFile(this.fqdb, fmt.Sprintf("f_id='%s' and d_id='%s'", m.FId, m.FId)); err != nil {
 				cbMsg = &CallbackMsg{
-					Status: filesys_failed,
+					Status: FileQue_Failed,
 					Msg:    err.Error(),
 				}
 			} else if err = os.RemoveAll(m.Path); err != nil {
 				cbMsg = &CallbackMsg{
-					Status: filesys_failed,
+					Status: FileQue_Failed,
 					Msg:    err.Error(),
 				}
 			}
 		} else {
 			if err = deleteFile(this.fqdb, "f_id='"+m.FId+"'"); err != nil {
 				cbMsg = &CallbackMsg{
-					Status: filesys_failed,
+					Status: FileQue_Failed,
 					Msg:    err.Error(),
 				}
 			} else {
 				if ms, err = findFiles(this.fqdb, "f_id='"+m.DId+"'"); err != nil {
 					cbMsg = &CallbackMsg{
-						Status: filesys_failed,
+						Status: FileQue_Failed,
 						Msg:    err.Error(),
 					}
 				} else if len(ms) != 1 {
 					cbMsg = &CallbackMsg{
-						Status: filesys_failed,
+						Status: FileQue_Failed,
 						Msg:    comerr.NotFound.Error(),
 					}
 				} else if err = updateDirCap(this.fqdb, ms[0].FId, ms[0].Capacity-1); err != nil {
 					cbMsg = &CallbackMsg{
-						Status: filesys_failed,
+						Status: FileQue_Failed,
 						Msg:    err.Error(),
 					}
 				}

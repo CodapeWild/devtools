@@ -120,3 +120,32 @@ func CommonPrefix(s1, s2 string) string {
 
 	return s1[:i]
 }
+
+func FindUInt(s string) (num uint, end int, err error) {
+	stop := false
+	for k, v := range s {
+		if v >= '0' && v <= '9' {
+			num = num*10 + uint(v-'0')
+			stop = true
+		} else {
+			if stop {
+				return num, k, nil
+			}
+		}
+	}
+
+	return num, 0, comerr.NotFound
+}
+
+func Merge(ss []string, sep string) string {
+	if len(ss) == 0 {
+		return ""
+	}
+
+	s := ss[0]
+	for _, v := range ss[1:] {
+		s += sep + v
+	}
+
+	return s
+}

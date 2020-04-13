@@ -21,13 +21,13 @@ type Message interface {
 type FanoutHandler func(ticket interface{}, msg Message)
 
 type MessageQueue struct {
-	msgChan chan Message
-	queBuf  int
-	TicketQueue
+	msgChan     chan Message
+	queBuf      int
 	sendTimeout time.Duration
-	suspending  bool
-	resume      chan int
-	closer      chan int
+	TicketQueue
+	suspending bool
+	resume     chan int
+	closer     chan int
 }
 
 type MessageQueueSetting func(msgQ *MessageQueue)
@@ -38,15 +38,15 @@ func SetQueueBuffer(queBuf int) MessageQueueSetting {
 	}
 }
 
-func SetTicket(tick TicketQueue) MessageQueueSetting {
+func SetTimeout(timeout time.Duration) MessageQueueSetting {
 	return func(msgQ *MessageQueue) {
-		msgQ.TicketQueue = tick
+		msgQ.sendTimeout = timeout
 	}
 }
 
-func SetSendTimeout(timeout time.Duration) MessageQueueSetting {
+func SetTicket(tick TicketQueue) MessageQueueSetting {
 	return func(msgQ *MessageQueue) {
-		msgQ.sendTimeout = timeout
+		msgQ.TicketQueue = tick
 	}
 }
 
