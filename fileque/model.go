@@ -21,7 +21,7 @@ func createTable(db *sql.DB) error {
 		return err
 	}
 	for _, v := range []string{"d_id", "path", "capacity"} {
-		if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_%s_index' on '%s'(%s)", def_tab_file, v, def_tab_file, v)); err != nil {
+		if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_%s_index' on '%s'(%s)\n", def_tab_file, v, def_tab_file, v)); err != nil {
 			return err
 		}
 	}
@@ -70,7 +70,7 @@ func updateDirCap(db *sql.DB, fid string, capacity int) error {
 }
 
 func deleteFile(db *sql.DB, where string) error {
-	_, err := db.Exec(fmt.Sprintf("delete from '%s' where %s", def_tab_file, where))
+	_, err := db.Exec(fmt.Sprintf("delete from '%s' where %s\n", def_tab_file, where))
 
 	return err
 }

@@ -9,13 +9,12 @@ import (
 
 type StaticFile struct {
 	http.File
-	listFiles, showHidden bool
+	showHidden bool
 }
 
-func NewStaticFile(f http.File, listFiles, showHidden bool) *StaticFile {
+func NewStaticFile(f http.File, showHidden bool) *StaticFile {
 	return &StaticFile{
 		File:       f,
-		listFiles:  listFiles,
 		showHidden: showHidden,
 	}
 }
@@ -26,13 +25,9 @@ func (this *StaticFile) Readdir(count int) ([]os.FileInfo, error) {
 		return nil, err
 	}
 
-	if this.listFiles && this.showHidden {
-		return all, err
-	}
-
 	var finfos []os.FileInfo
 	for _, v := range all {
-		if (!this.listFiles && !v.IsDir()) || (!this.showHidden && strings.HasPrefix(v.Name(), ".")) {
+		if strings.HasPrefix(v.Name(), ".") && !this.showHidden {
 			continue
 		}
 		finfos = append(finfos, v)
@@ -60,7 +55,7 @@ func (this *StaticSystem) Open(name string) (http.File, error) {
 		return nil, err
 	}
 
-	if !this.showHidden && strings.HasPrefix(finfo.Name(), ".") {
+	if (!this.listFiles && finfo.IsDir()) || (!this.showHidden && strings.HasPrefix(finfo.Name(), ".")) {
 		return nil, os.ErrPermission
 	}
 
@@ -69,5 +64,5 @@ func (this *StaticSystem) Open(name string) (http.File, error) {
 		return nil, err
 	}
 
-	return NewStaticFile(f, this.listFiles, this.showHidden), nil
+	return NewStaticFile(f, this.showHidden), nil
 }
