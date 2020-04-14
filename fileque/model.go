@@ -41,11 +41,7 @@ func addFile(db *sql.DB, m *MFile) error {
 }
 
 func findFiles(db *sql.DB, where string) ([]*MFile, error) {
-	stmt, err := db.Prepare(fmt.Sprintf("select * from '%s' where %s\n", def_tab_file, where))
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.Query()
+	rows, err := db.Query(fmt.Sprintf("select * from '%s' where %s\n", def_tab_file, where))
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +59,12 @@ func findFiles(db *sql.DB, where string) ([]*MFile, error) {
 }
 
 func updateDirCap(db *sql.DB, fid string, capacity int) error {
-	_, err := db.Exec(fmt.Sprintf("update '%s' set capacity=%d where f_id='%s'\n", def_tab_file, capacity, fid))
+	stmt, err := db.Prepare(fmt.Sprintf("update '%s' set capacity=%d where f_id='%s'\n", def_tab_file, capacity, fid))
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec()
 
 	return err
 }

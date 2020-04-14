@@ -1,4 +1,4 @@
-package httpext
+package file
 
 type MediaType int
 
