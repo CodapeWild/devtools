@@ -34,6 +34,7 @@ func addFile(db *sql.DB, m *MFile) error {
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
 	_, err = stmt.Exec(m.FId, m.DId, m.IsDir, m.Capacity, m.Path)
 
@@ -63,6 +64,7 @@ func updateDirCap(db *sql.DB, fid string, capacity int) error {
 	if err != nil {
 		return err
 	}
+	defer stmt.Close()
 
 	_, err = stmt.Exec()
 
