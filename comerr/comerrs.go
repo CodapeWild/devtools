@@ -9,7 +9,7 @@ var (
 	DataConvertFailed = errors.New("convert data failed")
 	DataOutOfRange    = errors.New("data out of range")
 	EmptyData         = errors.New("empty data")
-	NullAddress       = errors.New("null address")
+	NilAddress        = errors.New("nil address")
 	IncompleteModule  = errors.New("incomplete module")
 	ConnectFailed     = errors.New("connecting failed")
 	NotFound          = errors.New("not found")
