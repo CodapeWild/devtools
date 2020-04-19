@@ -53,6 +53,7 @@ func findFiles(db *sql.DB, where string) ([]*MFile, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var ms []*MFile
 	for rows.Next() {
