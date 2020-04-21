@@ -83,7 +83,7 @@ func (this *DirTicketQueue) Generate() interface{} {
 func (this *DirTicketQueue) Restore(ticket interface{}) {
 	dirTick := ticket.(*DirTicket)
 	if dirTick.Capacity >= this.dirCapacity {
-		if err := updateDirCap(this.fqdb, dirTick.Dir, dirTick.Capacity); err != nil {
+		if err := updateDirCapacity(this.fqdb, dirTick.Dir, dirTick.Capacity); err != nil {
 			log.Println(err.Error())
 		}
 

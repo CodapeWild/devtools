@@ -117,7 +117,7 @@ func (this *FileQueue) Close() {
 	this.MessageQueue.Close()
 	this.Traverse(func(ticket interface{}) bool {
 		dirTick := ticket.(*DirTicket)
-		if err := updateDirCap(this.fqdb, dirTick.Dir, dirTick.Capacity); err != nil {
+		if err := updateDirCapacity(this.fqdb, dirTick.Dir, dirTick.Capacity); err != nil {
 			log.Println(err.Error())
 		}
 
@@ -320,7 +320,7 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 						Status: FileQue_Failed,
 						Msg:    comerr.NotFound.Error(),
 					}
-				} else if err = updateDirCap(this.fqdb, ms[0].FId, ms[0].Capacity-1); err != nil {
+				} else if err = updateDirCapacity(this.fqdb, ms[0].FId, ms[0].Capacity-1); err != nil {
 					cbMsg = &CallbackMsg{
 						Status: FileQue_Failed,
 						Msg:    err.Error(),

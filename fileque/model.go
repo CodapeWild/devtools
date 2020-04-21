@@ -3,7 +3,6 @@ package fileque
 import (
 	"database/sql"
 	"fmt"
-	"sync"
 )
 
 const def_tab_file = "tab_file"
@@ -67,44 +66,38 @@ func findFiles(db *sql.DB, where string) ([]*MFile, error) {
 	return ms, nil
 }
 
-func updateDirCap(db *sql.DB, fid string, capacity int) error {
-	stmt, err := db.Prepare(fmt.Sprintf("update '%s' set capacity=%d where f_id='%s'\n", def_tab_file, capacity, fid))
+func updateDirCapacity(db *sql.DB, fid string, capacity int) error {
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
 
-	_, err = stmt.Exec()
+	rslt, err := tx.Exec(fmt.Sprintf("update '%s' set capacity=%d where f_id='%s'\n", def_tab_file, capacity, fid))
+	if err != nil {
+		return err
+	}
 
-	return err
+	if _, err = rslt.RowsAffected(); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func deleteFile(db *sql.DB, where string) error {
-	_, err := db.Exec(fmt.Sprintf("delete from '%s' where %s\n", def_tab_file, where))
-
-	return err
-}
-
-func write(db *sql.DB, mu *sync.Mutex, i, count int) {
-	// mu.Lock()
-	// defer mu.Unlock()
 	tx, err := db.Begin()
 	if err != nil {
-		fmt.Printf("begin. Exec error=%s", err)
-		return
+		return err
 	}
-	defer tx.Commit()
 
-	result, err := tx.Exec(`INSERT INTO users (user_name) VALUES ("Bobby");`)
+	rslt, err := tx.Exec(fmt.Sprintf("delete from '%s' where %s\n", def_tab_file, where))
 	if err != nil {
-		fmt.Printf("user insert. Exec error=%s", err)
-		return
+		return err
 	}
 
-	_, err = result.LastInsertId()
-	if err != nil {
-		fmt.Printf("user writer. LastInsertId error=%s", err)
+	if _, err = rslt.RowsAffected(); err != nil {
+		return err
 	}
 
-	fmt.Printf("+")
+	return tx.Commit()
 }
