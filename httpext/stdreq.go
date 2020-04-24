@@ -2,12 +2,14 @@ package httpext
 
 import (
 	"bytes"
+	"devtools/comerr"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -34,6 +36,10 @@ FOUND:
 
 // post and receive json data
 func PostJson(rawurl string, req, resp interface{}) (status int, err error) {
+	if resp == nil || reflect.TypeOf(resp).Kind() != reflect.Ptr {
+		return http.StatusBadRequest, comerr.ParamInvalid
+	}
+
 	var u *url.URL
 	if u, err = url.Parse(rawurl); err != nil {
 		return
@@ -70,6 +76,10 @@ func PostJson(rawurl string, req, resp interface{}) (status int, err error) {
 
 // parse json data from request
 func ReadJson(req *http.Request, param interface{}) error {
+	if param == nil || reflect.TypeOf(param).Kind() != reflect.Ptr {
+		return comerr.ParamInvalid
+	}
+
 	buf, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		return err
