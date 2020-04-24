@@ -20,7 +20,7 @@ func createTable(db *sql.DB) error {
 	if err != nil {
 		return err
 	}
-	for _, v := range []string{"d_id", "path", "capacity"} {
+	for _, v := range []string{"d_id", "capacity", "path"} {
 		if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_%s_index' on '%s'(%s)\n", def_tab_file, v, def_tab_file, v)); err != nil {
 			return err
 		}
