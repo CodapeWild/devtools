@@ -5,6 +5,14 @@ import (
 	"sort"
 )
 
+type ReverseSort struct {
+	sort.Interface
+}
+
+func (this *ReverseSort) Less(i, j int) bool {
+	return !this.Interface.Less(i, j)
+}
+
 func QuickSort(data sort.Interface, start, end int) {
 	if start >= end {
 		return
@@ -24,6 +32,11 @@ func QuickSort(data sort.Interface, start, end int) {
 
 	QuickSort(data, start, i)
 	QuickSort(data, i+1, end)
+}
+
+// quick sort data from start to end
+func QuickSortOverall(data sort.Interface) {
+	QuickSort(data, 0, data.Len())
 }
 
 func QuickLocate(data sort.Interface, ith int) error {
