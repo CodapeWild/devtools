@@ -15,13 +15,13 @@ type MFile struct {
 	Path     string // column: path
 }
 
-func createTable(db *sql.DB) error {
-	_, err := db.Exec(fmt.Sprintf("create table if not exists '%s'(f_id text primary key, d_id text, is_dir integer, capacity integer, path text)\n", def_tab_file))
+func createTabFile(db *sql.DB) error {
+	_, err := db.Exec(fmt.Sprintf("create table if not exists '%s'(f_id text primary key, d_id text, is_dir integer, capacity integer, path text);\n", def_tab_file))
 	if err != nil {
 		return err
 	}
 	for _, v := range []string{"d_id", "capacity", "path"} {
-		if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_%s_index' on '%s'(%s)\n", def_tab_file, v, def_tab_file, v)); err != nil {
+		if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_%s_index' on '%s'(%s);\n", def_tab_file, v, def_tab_file, v)); err != nil {
 			return err
 		}
 	}
@@ -35,7 +35,7 @@ func addFile(db *sql.DB, m *MFile) error {
 		return err
 	}
 
-	rslt, err := tx.Exec(fmt.Sprintf("insert into '%s' values(?,?,?,?,?)\n", def_tab_file), m.FId, m.DId, m.IsDir, m.Capacity, m.Path)
+	rslt, err := tx.Exec(fmt.Sprintf("insert into '%s' values(?,?,?,?,?);\n", def_tab_file), m.FId, m.DId, m.IsDir, m.Capacity, m.Path)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func addFile(db *sql.DB, m *MFile) error {
 }
 
 func findFiles(db *sql.DB, where string) ([]*MFile, error) {
-	rows, err := db.Query(fmt.Sprintf("select * from '%s' where %s\n", def_tab_file, where))
+	rows, err := db.Query(fmt.Sprintf("select * from '%s' where %s;\n", def_tab_file, where))
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func updateDirCapacity(db *sql.DB, fid string, capacity int) error {
 		return err
 	}
 
-	rslt, err := tx.Exec(fmt.Sprintf("update '%s' set capacity=%d where f_id='%s'\n", def_tab_file, capacity, fid))
+	rslt, err := tx.Exec(fmt.Sprintf("update '%s' set capacity=%d where f_id='%s';\n", def_tab_file, capacity, fid))
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func deleteFile(db *sql.DB, where string) error {
 		return err
 	}
 
-	rslt, err := tx.Exec(fmt.Sprintf("delete from '%s' where %s\n", def_tab_file, where))
+	rslt, err := tx.Exec(fmt.Sprintf("delete from '%s' where %s;\n", def_tab_file, where))
 	if err != nil {
 		return err
 	}
