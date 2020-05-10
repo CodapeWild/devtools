@@ -8,19 +8,19 @@ import (
 const def_tab_file = "tab_file"
 
 type MFile struct {
-	FId      string // column: f_id
-	DId      string // column: d_id
+	FId      string // column: fid
+	DId      string // column: did
 	IsDir    bool   // column: is_dir
 	Capacity int    // column: capacity
 	Path     string // column: path
 }
 
 func createTabFile(db *sql.DB) error {
-	_, err := db.Exec(fmt.Sprintf("create table if not exists '%s'(f_id text primary key, d_id text, is_dir integer, capacity integer, path text);\n", def_tab_file))
+	_, err := db.Exec(fmt.Sprintf("create table if not exists '%s'(fid text primary key, did text, is_dir integer, capacity integer, path text);\n", def_tab_file))
 	if err != nil {
 		return err
 	}
-	for _, v := range []string{"d_id", "capacity", "path"} {
+	for _, v := range []string{"did", "capacity", "path"} {
 		if _, err = db.Exec(fmt.Sprintf("create index if not exists '%s_%s_index' on '%s'(%s);\n", def_tab_file, v, def_tab_file, v)); err != nil {
 			return err
 		}
@@ -72,7 +72,7 @@ func updateDirCapacity(db *sql.DB, fid string, capacity int) error {
 		return err
 	}
 
-	rslt, err := tx.Exec(fmt.Sprintf("update '%s' set capacity=%d where f_id='%s';\n", def_tab_file, capacity, fid))
+	rslt, err := tx.Exec(fmt.Sprintf("update '%s' set capacity=%d where fid='%s';\n", def_tab_file, capacity, fid))
 	if err != nil {
 		return err
 	}

@@ -34,7 +34,7 @@ func (this *FileSystem) Open(name string) (http.File, error) {
 		return nil, os.ErrInvalid
 	}
 
-	ms, err := findFiles(this.db, "f_id='"+name+"'")
+	ms, err := findFiles(this.db, "fid='"+name+"'")
 	if err != nil {
 		log.Println(err.Error())
 

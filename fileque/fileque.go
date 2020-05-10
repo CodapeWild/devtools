@@ -178,7 +178,7 @@ func (this *FileQueue) saveFile(ticket *DirTicket, msg *SaveMsg) {
 }
 
 func (this *FileQueue) findFile(msg *FindMsg) {
-	ms, err := findFiles(this.fqdb, "f_id='"+msg.FId+"'")
+	ms, err := findFiles(this.fqdb, "fid='"+msg.FId+"'")
 	if err != nil {
 		msg.Put(&CallbackMsg{
 			Status: FileQue_Failed,
@@ -234,7 +234,7 @@ func (this *FileQueue) findFile(msg *FindMsg) {
 }
 
 func (this *FileQueue) delFile(msg *DelMsg) {
-	ms, err := findFiles(this.fqdb, "f_id='"+msg.FId+"'")
+	ms, err := findFiles(this.fqdb, "fid='"+msg.FId+"'")
 	if err != nil {
 		msg.Put(&CallbackMsg{
 			Status: FileQue_Failed,
@@ -253,7 +253,7 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 		var cbMsg *CallbackMsg
 		this.Traverse(func(ticket interface{}) bool {
 			if ticket.(*DirTicket).Dir == m.FId {
-				if err = deleteFile(this.fqdb, fmt.Sprintf("f_id='%s' and d_id='%s'", m.FId, m.FId)); err != nil {
+				if err = deleteFile(this.fqdb, fmt.Sprintf("fid='%s' and did='%s'", m.FId, m.FId)); err != nil {
 					cbMsg = &CallbackMsg{
 						Status: FileQue_Failed,
 						Msg:    err.Error(),
@@ -267,7 +267,7 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 				this.Restore(this.Generate())
 			} else if ticket.(*DirTicket).Dir == m.DId {
 				ticket.(*DirTicket).Capacity--
-				if err = deleteFile(this.fqdb, "f_id='"+m.FId+"'"); err != nil {
+				if err = deleteFile(this.fqdb, "fid='"+m.FId+"'"); err != nil {
 					cbMsg = &CallbackMsg{
 						Status: FileQue_Failed,
 						Msg:    err.Error(),
@@ -292,7 +292,7 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 
 		cbMsg = &CallbackMsg{Status: FileQue_Success}
 		if m.IsDir {
-			if err = deleteFile(this.fqdb, fmt.Sprintf("f_id='%s' and d_id='%s'", m.FId, m.FId)); err != nil {
+			if err = deleteFile(this.fqdb, fmt.Sprintf("fid='%s' and did='%s'", m.FId, m.FId)); err != nil {
 				cbMsg = &CallbackMsg{
 					Status: FileQue_Failed,
 					Msg:    err.Error(),
@@ -304,13 +304,13 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 				}
 			}
 		} else {
-			if err = deleteFile(this.fqdb, "f_id='"+m.FId+"'"); err != nil {
+			if err = deleteFile(this.fqdb, "fid='"+m.FId+"'"); err != nil {
 				cbMsg = &CallbackMsg{
 					Status: FileQue_Failed,
 					Msg:    err.Error(),
 				}
 			} else {
-				if ms, err = findFiles(this.fqdb, "f_id='"+m.DId+"'"); err != nil {
+				if ms, err = findFiles(this.fqdb, "fid='"+m.DId+"'"); err != nil {
 					cbMsg = &CallbackMsg{
 						Status: FileQue_Failed,
 						Msg:    err.Error(),
