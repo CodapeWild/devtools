@@ -39,7 +39,6 @@ func addFile(db *sql.DB, m *MFile) error {
 	if err != nil {
 		return err
 	}
-
 	if _, err = rslt.LastInsertId(); err != nil {
 		return err
 	}
@@ -76,7 +75,6 @@ func updateDirCapacity(db *sql.DB, fid string, capacity int) error {
 	if err != nil {
 		return err
 	}
-
 	if _, err = rslt.RowsAffected(); err != nil {
 		return err
 	}
@@ -94,7 +92,6 @@ func deleteFile(db *sql.DB, where string) error {
 	if err != nil {
 		return err
 	}
-
 	if _, err = rslt.RowsAffected(); err != nil {
 		return err
 	}
