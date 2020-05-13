@@ -24,10 +24,10 @@ func TestFileQue(t *testing.T) {
 		go func() {
 			for {
 				msg := &SaveMsg{
-					Buf:           []byte("hello,tnt"),
-					FileMode:      0644,
-					Ext:           "txt",
-					CallbackQueue: msgque.NewCallbackQueue(time.Second),
+					Buf:      []byte("hello,tnt"),
+					FileMode: 0644,
+					Ext:      "txt",
+					Callback: msgque.NewSimpleCallback(time.Second),
 				}
 				if err = fq.Send(msg); err != nil {
 					log.Panicln(err.Error())

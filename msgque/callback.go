@@ -13,24 +13,24 @@ func (this NoCallback) Put(msg interface{}) bool { return false }
 
 func (this NoCallback) Wait() interface{} { return nil }
 
-type CallbackQueue struct {
-	cbChan  chan interface{}
+type SimpleCallback struct {
+	cbch    chan interface{}
 	timeout time.Duration
 }
 
-func NewCallbackQueue(timeout time.Duration) *CallbackQueue {
-	return &CallbackQueue{
-		cbChan:  make(chan interface{}),
+func NewSimpleCallback(timeout time.Duration) *SimpleCallback {
+	return &SimpleCallback{
+		cbch:    make(chan interface{}),
 		timeout: timeout,
 	}
 }
 
-func (this *CallbackQueue) Put(msg interface{}) bool {
-	if this.cbChan != nil {
+func (this *SimpleCallback) Put(msg interface{}) bool {
+	if this.cbch != nil {
 		select {
 		case <-time.After(this.timeout):
 			return false
-		case this.cbChan <- msg:
+		case this.cbch <- msg:
 			return true
 		}
 	}
@@ -38,11 +38,11 @@ func (this *CallbackQueue) Put(msg interface{}) bool {
 	return false
 }
 
-func (this *CallbackQueue) Wait() (msg interface{}) {
-	if this.cbChan != nil {
+func (this *SimpleCallback) Wait() (msg interface{}) {
+	if this.cbch != nil {
 		select {
 		case <-time.After(this.timeout):
-		case msg = <-this.cbChan:
+		case msg = <-this.cbch:
 		}
 	}
 

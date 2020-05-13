@@ -15,7 +15,7 @@ type SaveMsg struct {
 	Buf      []byte
 	FileMode os.FileMode
 	Ext      string
-	*msgque.CallbackQueue
+	msgque.Callback
 }
 
 func (this *SaveMsg) Id() interface{} {
@@ -32,7 +32,7 @@ func (this *SaveMsg) MustFetch() bool {
 
 type FindMsg struct {
 	FId string
-	*msgque.CallbackQueue
+	msgque.Callback
 }
 
 func (this *FindMsg) Id() interface{} {
@@ -49,7 +49,7 @@ func (this *FindMsg) MustFetch() bool {
 
 type DelMsg struct {
 	FId string
-	*msgque.CallbackQueue
+	msgque.Callback
 }
 
 func (this *DelMsg) Id() interface{} {
