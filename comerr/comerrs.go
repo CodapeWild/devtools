@@ -17,4 +17,5 @@ var (
 	ProcessFailed        = errors.New("process failed")
 	ChannelClosed        = errors.New("channel closed")
 	UnrecognizedProtocol = errors.New("unrecognized protocol")
+	HostLookupFailed     = errors.New("host lookup failed")
 )

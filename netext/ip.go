@@ -3,6 +3,8 @@ package netext
 import (
 	"bytes"
 	"net"
+	"strconv"
+	"strings"
 )
 
 type IpRange struct {
@@ -54,4 +56,20 @@ func Ip4ToInt(ip net.IP) uint32 {
 	}
 
 	return ipInt
+}
+
+func SplitHostPort(addr string) (host string, port int, err error) {
+	i := strings.Index(addr, "://")
+	if i > 0 {
+		addr = addr[i+3:]
+	}
+
+	var portstr string
+	host, portstr, err = net.SplitHostPort(addr)
+	if err != nil {
+		return "", 0, err
+	}
+	port, err = strconv.Atoi(portstr)
+
+	return
 }

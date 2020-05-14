@@ -1,9 +1,12 @@
 package netext
 
 import (
+	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"testing"
+	"time"
 )
 
 func TestIp(t *testing.T) {
@@ -16,5 +19,24 @@ func TestIp(t *testing.T) {
 }
 
 func TestSocks(t *testing.T) {
+	req, err := http.NewRequest(http.MethodGet, "https://www.mm666.club", nil)
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	clnt := http.Client{Transport: &http.Transport{Dial: SSProxyDialFunc("socks4://127.0.0.1:1080", 60*time.Second)}}
+	// clnt := http.Client{Transport: &http.Transport{Dial: SSProxyDialFunc("socks5://127.0.0.1:1080", 60*time.Second)}}
 
+	resp, err := clnt.Do(req)
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	if resp.StatusCode != http.StatusOK {
+		log.Panicln(resp.Status)
+	}
+
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	log.Println(string(buf))
 }
