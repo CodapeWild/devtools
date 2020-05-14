@@ -18,7 +18,7 @@ func ReadJsonFile(filePath string, out interface{}) error {
 		return comerr.ParamInvalid
 	}
 	if v := reflect.TypeOf(out); v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
-		return comerr.ParamTypeInvalid
+		return comerr.TypeInvalid
 	}
 
 	if buf, err := ioutil.ReadFile(filePath); err != nil {

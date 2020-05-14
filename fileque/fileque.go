@@ -134,7 +134,7 @@ func (this *FileQueue) fileFanout(ticket interface{}, msg msgque.Message) {
 	case del_file_msg:
 		this.delFile(msg.(*DelMsg))
 	default:
-		log.Println(comerr.ParamTypeInvalid)
+		log.Println(comerr.TypeInvalid)
 	}
 }
 

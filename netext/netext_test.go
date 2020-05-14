@@ -14,3 +14,7 @@ func TestIp(t *testing.T) {
 	log.Println(IsPrivate(net.ParseIP("192.0.0.100")))
 	log.Println(IsPrivate(net.ParseIP("100.64.1.100")))
 }
+
+func TestSocks(t *testing.T) {
+
+}

@@ -43,7 +43,7 @@ func (this *MgoWrapper) FindById(col string, id interface{}, rslt interface{}) e
 		return comerr.ParamInvalid
 	}
 	if reflect.TypeOf(rslt).Kind() != reflect.Ptr {
-		return comerr.ParamTypeInvalid
+		return comerr.TypeInvalid
 	}
 
 	db := this.ConnDB()
@@ -57,7 +57,7 @@ func (this *MgoWrapper) FindOne(col string, query interface{}, rslt interface{})
 		return comerr.ParamInvalid
 	}
 	if reflect.TypeOf(rslt).Kind() != reflect.Ptr {
-		return comerr.ParamTypeInvalid
+		return comerr.TypeInvalid
 	}
 
 	db := this.ConnDB()
@@ -68,7 +68,7 @@ func (this *MgoWrapper) FindOne(col string, query interface{}, rslt interface{})
 
 func (this *MgoWrapper) FindAll(col string, query interface{}, skip, limit int, rslt interface{}) error {
 	if t := reflect.TypeOf(rslt); t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Slice {
-		return comerr.ParamTypeInvalid
+		return comerr.TypeInvalid
 	}
 
 	db := this.ConnDB()
@@ -82,7 +82,7 @@ func (this *MgoWrapper) FindTopOne(col string, query interface{}, orderBy string
 		return comerr.ParamInvalid
 	}
 	if reflect.TypeOf(rslt).Kind() != reflect.Ptr {
-		return comerr.ParamTypeInvalid
+		return comerr.TypeInvalid
 	}
 
 	db := this.ConnDB()
@@ -93,7 +93,7 @@ func (this *MgoWrapper) FindTopOne(col string, query interface{}, orderBy string
 
 func (this *MgoWrapper) FindAndSort(col string, query interface{}, orderBy string, skip, limit int, rslt interface{}) error {
 	if t := reflect.TypeOf(rslt); t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Slice {
-		return comerr.ParamTypeInvalid
+		return comerr.TypeInvalid
 	}
 
 	db := this.ConnDB()

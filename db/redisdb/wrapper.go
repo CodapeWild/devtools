@@ -85,7 +85,7 @@ func (this *RedisWrapper) MSet(compound interface{}) (interface{}, error) {
 		k = t.Kind()
 	}
 	if k != reflect.Struct && k != reflect.Map {
-		return nil, comerr.ParamTypeInvalid
+		return nil, comerr.TypeInvalid
 	} else {
 		args = args.AddFlat(compound)
 	}
@@ -155,7 +155,7 @@ func (this *RedisWrapper) HMSet(key string, compound interface{}) (interface{}, 
 		k = t.Kind()
 	}
 	if k != reflect.Map && k != reflect.Struct {
-		return nil, comerr.ParamTypeInvalid
+		return nil, comerr.TypeInvalid
 	} else {
 		args = args.Add(key).AddFlat(compound)
 	}
@@ -182,7 +182,7 @@ func (this *RedisWrapper) HMScanStruct(key string, dst interface{}) error {
 		return comerr.ParamInvalid
 	}
 	if t := reflect.TypeOf(dst); t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Struct {
-		return comerr.ParamTypeInvalid
+		return comerr.TypeInvalid
 	}
 
 	conn := this.Session()
