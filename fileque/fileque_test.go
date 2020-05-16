@@ -27,7 +27,7 @@ func TestFileQue(t *testing.T) {
 					Buf:      []byte("hello,tnt"),
 					FileMode: 0644,
 					Ext:      "txt",
-					Callback: msgque.NewSimpleCallback(time.Second),
+					Callback: msgque.NewSimpleCallback(time.Second, nil),
 				}
 				if err = fq.Send(msg); err != nil {
 					log.Panicln(err.Error())

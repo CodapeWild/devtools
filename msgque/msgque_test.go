@@ -86,7 +86,7 @@ func TestMsgQue(t *testing.T) {
 		if rand.Intn(100) > 49 {
 			fm1 := &FooMsg1{
 				MsgId:    rand.Intn(1000),
-				Callback: NewSimpleCallback(time.Second),
+				Callback: NewSimpleCallback(time.Second, nil),
 			}
 			if err := msgq.Send(fm1); err != nil {
 				log.Println(err.Error())
@@ -98,7 +98,7 @@ func TestMsgQue(t *testing.T) {
 		} else {
 			fm2 := &FooMsg2{
 				MsgId:    rand.Intn(1000),
-				Callback: NewSimpleCallback(time.Second),
+				Callback: NewSimpleCallback(time.Second, nil),
 			}
 			if err := msgq.Send(fm2); err != nil {
 				log.Println(err.Error())

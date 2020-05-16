@@ -28,12 +28,7 @@ const (
 // proxy: proto://ip:port like
 // socks4://127.0.0.1:1080
 // socks5://user:pswd@127.0.0.1:1080
-func SSProxyDialFunc(proxy string, timeout time.Duration) func(network, addr string) (net.Conn, error) {
-	pxuri, err := url.Parse(proxy)
-	if err != nil {
-		return dialError(err)
-	}
-
+func SSProxyDialFunc(pxuri *url.URL, timeout time.Duration) func(network, addr string) (net.Conn, error) {
 	if pxuri.Scheme != SOCKS4 && pxuri.Scheme != SOCKS5 && pxuri.Scheme != SOCKS4A {
 		return dialError(comerr.UnrecognizedProtocol)
 	}
@@ -177,7 +172,7 @@ func (this *socksConn) dialSocks5(target string) (net.Conn, error) {
 
 func (this *socksConn) query(req []byte) (resp []byte, err error) {
 	if this.timeout > 0 {
-		if err = this.conn.SetDeadline(time.Now().Add(2 * this.timeout)); err != nil {
+		if err = this.conn.SetDeadline(time.Now().Add(this.timeout)); err != nil {
 			return nil, err
 		}
 		defer this.conn.SetDeadline(time.Time{})

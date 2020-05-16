@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 )
@@ -23,7 +24,11 @@ func TestSocks(t *testing.T) {
 	if err != nil {
 		log.Panicln(err.Error())
 	}
-	clnt := http.Client{Transport: &http.Transport{Dial: SSProxyDialFunc("socks4://127.0.0.1:1080", 60*time.Second)}}
+	pxuri, err := url.Parse("socks4://127.0.0.1:1080")
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	clnt := http.Client{Transport: &http.Transport{Dial: SSProxyDialFunc(pxuri, 60*time.Second)}}
 	// clnt := http.Client{Transport: &http.Transport{Dial: SSProxyDialFunc("socks5://127.0.0.1:1080", 60*time.Second)}}
 
 	resp, err := clnt.Do(req)
