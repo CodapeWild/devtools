@@ -88,6 +88,7 @@ func NewFileQueue(opt ...FileQueueSetting) (*FileQueue, error) {
 	if fq.fqdb, err = sql.Open("sqlite3", fq.fqDbPath); err != nil {
 		return nil, err
 	}
+	fq.fqdb.SetMaxOpenConns(1)
 	if err = createTabFile(fq.fqdb); err != nil {
 		return nil, err
 	}

@@ -35,15 +35,12 @@ func addFile(db *sql.DB, m *MFile) error {
 		return err
 	}
 
-	rslt, err := tx.Exec(fmt.Sprintf("insert into '%s' values(?,?,?,?,?);\n", def_tab_file), m.FId, m.DId, m.IsDir, m.Capacity, m.Path)
+	_, err = tx.Exec(fmt.Sprintf("insert into '%s' values(?,?,?,?,?);\n", def_tab_file), m.FId, m.DId, m.IsDir, m.Capacity, m.Path)
 	if err != nil {
-		return err
+		return tx.Rollback()
+	} else {
+		return tx.Commit()
 	}
-	if _, err = rslt.LastInsertId(); err != nil {
-		return err
-	}
-
-	return tx.Commit()
 }
 
 func findFiles(db *sql.DB, where string) ([]*MFile, error) {
@@ -71,15 +68,12 @@ func updateDirCapacity(db *sql.DB, fid string, capacity int) error {
 		return err
 	}
 
-	rslt, err := tx.Exec(fmt.Sprintf("update '%s' set capacity=%d where fid='%s';\n", def_tab_file, capacity, fid))
+	_, err = tx.Exec(fmt.Sprintf("update '%s' set capacity=%d where fid='%s';\n", def_tab_file, capacity, fid))
 	if err != nil {
-		return err
+		return tx.Rollback()
+	} else {
+		return tx.Commit()
 	}
-	if _, err = rslt.RowsAffected(); err != nil {
-		return err
-	}
-
-	return tx.Commit()
 }
 
 func deleteFile(db *sql.DB, where string) error {
@@ -88,13 +82,10 @@ func deleteFile(db *sql.DB, where string) error {
 		return err
 	}
 
-	rslt, err := tx.Exec(fmt.Sprintf("delete from '%s' where %s;\n", def_tab_file, where))
+	_, err = tx.Exec(fmt.Sprintf("delete from '%s' where %s;\n", def_tab_file, where))
 	if err != nil {
-		return err
+		return tx.Rollback()
+	} else {
+		return tx.Commit()
 	}
-	if _, err = rslt.RowsAffected(); err != nil {
-		return err
-	}
-
-	return tx.Commit()
 }
