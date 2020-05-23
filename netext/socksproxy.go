@@ -70,6 +70,24 @@ func (this *socksConn) dial(target string) (net.Conn, error) {
 	return nil, comerr.UnrecognizedProtocol
 }
 
+func (this *socksConn) query(req []byte) (resp []byte, err error) {
+	if this.timeout > 0 {
+		if err = this.conn.SetDeadline(time.Now().Add(this.timeout)); err != nil {
+			return nil, err
+		}
+		defer this.conn.SetDeadline(time.Time{})
+	}
+
+	if _, err = this.conn.Write(req); err != nil {
+		return nil, err
+	}
+
+	resp = make([]byte, 1024)
+	c, err := this.conn.Read(resp)
+
+	return resp[:c], err
+}
+
 func (this *socksConn) dialSocks4(target string) (net.Conn, error) {
 	host, port, err := SplitHostPort(target)
 	if err != nil {
@@ -168,22 +186,4 @@ func (this *socksConn) dialSocks5(target string) (net.Conn, error) {
 	}
 
 	return this.conn, nil
-}
-
-func (this *socksConn) query(req []byte) (resp []byte, err error) {
-	if this.timeout > 0 {
-		if err = this.conn.SetDeadline(time.Now().Add(this.timeout)); err != nil {
-			return nil, err
-		}
-		defer this.conn.SetDeadline(time.Time{})
-	}
-
-	if _, err = this.conn.Write(req); err != nil {
-		return nil, err
-	}
-
-	resp = make([]byte, 1024)
-	c, err := this.conn.Read(resp)
-
-	return resp[:c], err
 }
