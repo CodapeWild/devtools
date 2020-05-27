@@ -170,14 +170,14 @@ func (this *RedisWrapper) HMGet(key string, fields ...interface{}) (interface{},
 	conn := this.Session()
 	defer conn.Close()
 
-	if fields[0] != nil {
+	if len(fields) != 0 {
 		return conn.Do("hmget", redis.Args{}.Add(key).AddFlat(fields)...)
 	} else {
 		return conn.Do("hgetall", key)
 	}
 }
 
-func (this *RedisWrapper) HMScanStruct(key string, dst interface{}) error {
+func (this *RedisWrapper) HScanStruct(key string, dst interface{}) error {
 	if dst == nil {
 		return comerr.ParamInvalid
 	}
@@ -204,7 +204,7 @@ func (this *RedisWrapper) HDel(key string, fields ...interface{}) (interface{}, 
 	conn := this.Session()
 	defer conn.Close()
 
-	if fields[0] != nil {
+	if len(fields) != 0 {
 		return conn.Do("hdel", redis.Args{}.Add(key).AddFlat(fields))
 	} else {
 		return conn.Do("del", key)
