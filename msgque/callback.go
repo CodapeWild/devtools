@@ -9,6 +9,10 @@ type Callback interface {
 
 type NoCallback struct{}
 
+func NewNoCallback() *NoCallback {
+	return &NoCallback{}
+}
+
 func (this NoCallback) Put(msg interface{}) bool { return false }
 
 func (this NoCallback) Wait() interface{} { return nil }
