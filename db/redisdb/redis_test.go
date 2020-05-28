@@ -42,6 +42,10 @@ func TestHMSet(t *testing.T) {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
+	// _, err = rdsdb.Set("name", "tnt", 0)
+	// if err != nil {
+	// 	log.Fatalln(err.Error())
+	// }
 
 	if _, err = rdsdb.HMSet("tnt", map[string]interface{}{"name": "abc", "age": 321}); err != nil {
 		log.Fatalln(err.Error())
@@ -52,4 +56,6 @@ func TestHMSet(t *testing.T) {
 		log.Fatalln(err.Error())
 	}
 	log.Println(data)
+
+	log.Println(rdsdb.Keys("*"))
 }

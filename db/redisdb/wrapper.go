@@ -40,6 +40,31 @@ func (this *RedisWrapper) TTL(key string) (sec int64, err error) {
 	return redis.Int64(conn.Do("ttl", key))
 }
 
+func (this *RedisWrapper) Keys(pattern string) ([]string, error) {
+	if pattern == "" {
+		pattern = "*"
+	}
+
+	conn := this.Session()
+	defer conn.Close()
+
+	rply, err := conn.Do("keys", pattern)
+	if err != nil {
+		return nil, err
+	}
+	rslt, ok := rply.([]interface{})
+	if !ok {
+		return nil, comerr.TypeInvalid
+	}
+
+	keys := make([]string, len(rslt))
+	for k, v := range rslt {
+		keys[k] = string(v.([]uint8))
+	}
+
+	return keys, nil
+}
+
 func (this *RedisWrapper) IsKeyExists(key string) bool {
 	if key == "" {
 		return false
