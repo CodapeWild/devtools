@@ -4,6 +4,7 @@
   "pswd": "",
   "max_idle": 3,
   "max_active": 60,
-  "read_timeout": 3,
-  "write_timeout": 6
+  "dial_timeout_sec": 6,
+  "read_timeout_sec": 6,
+  "write_timeout_sec": 12
 }

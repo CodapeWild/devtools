@@ -7,13 +7,14 @@ import (
 )
 
 type RedisConfig struct {
-	Host         string        `json:"host"`
-	Port         string        `json:"port"`
-	Pswd         string        `json:"pswd"`
-	MaxIdle      int           `json:"max_idl"`
-	MaxActive    int           `json:"max_active"`
-	ReadTimeout  time.Duration `json:"read_timeout"`
-	WriteTimeout time.Duration `json:"write_timeout"`
+	Host            string `json:"host"`
+	Port            string `json:"port"`
+	Pswd            string `json:"pswd"`
+	MaxIdle         int    `json:"max_idl"`
+	MaxActive       int    `json:"max_active"`
+	DialTimeoutSec  int    `json:"dial_timeout_sec"`
+	ReadTimeoutSec  int    `json:"read_timeout_sec"`
+	WriteTimeoutSec int    `json:"write_timeout_sec"`
 }
 
 func (this *RedisConfig) NewPool() (*redis.Pool, error) {
@@ -26,7 +27,7 @@ func (this *RedisConfig) NewPool() (*redis.Pool, error) {
 
 	pool := &redis.Pool{
 		Dial: func() (redis.Conn, error) {
-			conn, err := redis.Dial("tcp", addr, redis.DialConnectTimeout(3*time.Second), redis.DialReadTimeout(this.ReadTimeout*time.Second), redis.DialWriteTimeout(this.WriteTimeout*time.Second))
+			conn, err := redis.Dial("tcp", addr, redis.DialConnectTimeout(time.Duration(this.DialTimeoutSec)*time.Second), redis.DialReadTimeout(time.Duration(this.ReadTimeoutSec)*time.Second), redis.DialWriteTimeout(time.Duration(this.WriteTimeoutSec)*time.Second))
 			if err != nil {
 				return nil, err
 			}
