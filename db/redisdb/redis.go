@@ -54,7 +54,10 @@ func (this *RedisConfig) NewPool() (*redis.Pool, error) {
 		Wait:        true,
 	}
 
-	if _, err := pool.Get().Do("ping"); err != nil {
+	conn := pool.Get()
+	defer conn.Close()
+
+	if _, err := conn.Do("ping"); err != nil {
 		return nil, err
 	} else {
 		return pool, nil
