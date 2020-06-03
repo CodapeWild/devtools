@@ -23,6 +23,16 @@ const (
 	IANA_ContextKey                = "MIME_CTX"
 )
 
+func LocalOnly(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
+		if ip, _ := RemoteIp(req); ip != "127.0.0.1" {
+			respw.WriteHeader(http.StatusNotAcceptable)
+		} else {
+			handler.ServeHTTP(respw, req)
+		}
+	})
+}
+
 func PostOnly(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
