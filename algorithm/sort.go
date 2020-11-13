@@ -22,9 +22,7 @@ func QuickSort(data sort.Interface, start, end int) {
 	var i, j, pivot = start, start + 1, start
 	for j < end {
 		if data.Less(j, pivot) {
-			if i++; i != j {
-				data.Swap(i, j)
-			}
+			data.Swap(i+1, j)
 		}
 		j++
 	}

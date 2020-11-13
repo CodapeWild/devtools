@@ -4,5 +4,6 @@ type Permutable interface {
 	Len() int
 }
 
-func Permutate(p Permutable) {
+func Permute(p Permutable) {
+
 }
