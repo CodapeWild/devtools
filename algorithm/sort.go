@@ -23,6 +23,7 @@ func QuickSort(data sort.Interface, start, end int) {
 	for j < end {
 		if data.Less(j, pivot) {
 			data.Swap(i+1, j)
+			i++
 		}
 		j++
 	}
