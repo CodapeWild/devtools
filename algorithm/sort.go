@@ -2,6 +2,7 @@ package algorithm
 
 import (
 	"devtools/comerr"
+	"math/rand"
 	"sort"
 )
 
@@ -13,24 +14,26 @@ func (this *ReverseSort) Less(i, j int) bool {
 	return !this.Interface.Less(i, j)
 }
 
-func QuickSort(data sort.Interface, start, end int) {
-	if start >= end {
+func QuickSort(data sort.Interface, left, right int) {
+	if left >= right {
 		return
 	}
 
-	Disorder(data, start, end)
-	var i, j, pivot = start, start + 1, start
-	for j < end {
-		if data.Less(j, pivot) {
-			data.Swap(i+1, j)
-			i++
+	pivot := left + rand.Intn(right-left)
+	data.Swap(pivot, left)
+	pivot = left
+	candi, cur := left, left+1
+	for cur < right {
+		if data.Less(cur, pivot) {
+			candi++
+			data.Swap(cur, candi)
 		}
-		j++
+		cur++
 	}
-	data.Swap(pivot, i)
+	data.Swap(candi, pivot)
 
-	QuickSort(data, start, i)
-	QuickSort(data, i+1, end)
+	QuickSort(data, left, candi)
+	QuickSort(data, candi+1, right)
 }
 
 // quick sort data from start to end
