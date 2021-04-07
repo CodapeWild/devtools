@@ -1,8 +1,6 @@
 package msgque
 
-import (
-	"devtools/code"
-)
+import "devtools/code"
 
 type TicketQueue interface {
 	MaxThreads() int

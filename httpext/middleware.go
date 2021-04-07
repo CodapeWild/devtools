@@ -23,10 +23,10 @@ const (
 	IANA_ContextKey                = "MIME_CTX"
 )
 
-func LocalOnly(handler http.Handler) http.Handler {
+func GetOnly(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
-		if ip, _ := RemoteIp(req); ip != "127.0.0.1" {
-			respw.WriteHeader(http.StatusNotAcceptable)
+		if req.Method != http.MethodGet {
+			respw.WriteHeader(http.StatusMethodNotAllowed)
 		} else {
 			handler.ServeHTTP(respw, req)
 		}
@@ -43,27 +43,12 @@ func PostOnly(handler http.Handler) http.Handler {
 	})
 }
 
-func GetOnly(handler http.Handler) http.Handler {
+func AfterLogin(handler http.Handler, sessToken session.SessToken) http.Handler {
 	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			respw.WriteHeader(http.StatusMethodNotAllowed)
-		} else {
+		if cookie := req.Header.Get(Cookie_Header_Key); sessToken.Verify(cookie) {
 			handler.ServeHTTP(respw, req)
-		}
-	})
-}
-
-func AfterLogin(handler http.Handler, keeper *session.Keeper) http.Handler {
-	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
-		if cookie := req.Header.Get(Cookie_Header_Key); keeper.GetSessionTTL(cookie) <= 0 {
-			NewStdResp(StateDataExpired, nil).WriteJson(respw)
 		} else {
-			if idstr, err := keeper.CookieValue(cookie); err != nil {
-				log.Println(err.Error())
-				NewStdResp(StateProcessError, nil).WriteJson(respw)
-			} else {
-				handler.ServeHTTP(respw, req.WithContext(context.WithValue(req.Context(), Id_ContextKey, idstr)))
-			}
+			NewStdResp(StateDataExpired, nil).WriteJson(respw)
 		}
 	})
 }

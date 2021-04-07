@@ -1,7 +1,9 @@
 package comerr
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"runtime"
 	"time"
 )
@@ -36,4 +38,23 @@ func ToComErr(errStr string) ComErr {
 	}
 
 	return ComErr(errStr)
+}
+
+func ContextError(ctx context.Context) error {
+	switch ctx.Err() {
+	case context.Canceled:
+		return fmt.Errorf("process canceled")
+	case context.DeadlineExceeded:
+		return fmt.Errorf("deadline is exceeded")
+	default:
+		return nil
+	}
+}
+
+func LogError(err error) error {
+	if err != nil {
+		log.Println(err)
+	}
+
+	return err
 }
