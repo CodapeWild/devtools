@@ -12,10 +12,7 @@ import (
 )
 
 const (
-	Cookie_Header_Key = "Authorization"
-)
-
-const (
+	X_Token                        = "X_TOKEN"
 	Id_ContextKey                  = "ID_CTX"
 	MultipartFile_ContextKey       = "MultipartFILE_CTX"
 	MultipartFileHeader_ContextKey = "MultipartFileHeader_CTX"
@@ -45,7 +42,7 @@ func PostOnly(handler http.Handler) http.Handler {
 
 func AfterLogin(handler http.Handler, sessToken session.SessToken) http.Handler {
 	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
-		if cookie := req.Header.Get(Cookie_Header_Key); sessToken.Verify(cookie) {
+		if cookie := req.Header.Get(X_Token); sessToken.Verify(cookie) {
 			handler.ServeHTTP(respw, req)
 		} else {
 			NewStdResp(StateDataExpired, nil).WriteJson(respw)

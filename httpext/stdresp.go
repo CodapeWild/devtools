@@ -7,11 +7,6 @@ import (
 	"net/http"
 )
 
-type StdStatus struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
-}
-
 var (
 	StateSuccess = &StdStatus{Status: 1, Msg: "success"}
 )
@@ -31,6 +26,11 @@ var (
 	StateDataTypeInvalid      = &StdStatus{Status: 13, Msg: "data type invalid"}
 	StateDataMediaInvalid     = &StdStatus{Status: 14, Msg: "data media invalid"}
 )
+
+type StdStatus struct {
+	Status int    `json:"status"`
+	Msg    string `json:"msg"`
+}
 
 type StdResp struct {
 	*StdStatus
