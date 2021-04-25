@@ -1,30 +1,30 @@
 package httpext
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
-	"errors"
-	"io/ioutil"
 	"net/http"
 )
 
 var (
-	StateSuccess = &StdStatus{Status: 1, Msg: "success"}
+	StateSuccess = &StdStatus{Status: 1000, Msg: "success"}
 )
 
 var (
-	StateServiceAccessBlocked = &StdStatus{Status: 2, Msg: "service access blocked"}
-	StateParseParamFailed     = &StdStatus{Status: 3, Msg: "parse parameter failed"}
-	StateParamInvalid         = &StdStatus{Status: 4, Msg: "invalid parameter for request"}
-	StateProcessTimeout       = &StdStatus{Status: 5, Msg: "processing timeout"}
-	StateProcessError         = &StdStatus{Status: 6, Msg: "processing error"}
-	StateDataNotFound         = &StdStatus{Status: 7, Msg: "data can not find"}
-	StateDataVerifyFailed     = &StdStatus{Status: 8, Msg: "data verification failed"}
-	StateDataAccessBlocked    = &StdStatus{Status: 9, Msg: "data access blocked"}
-	StateDataModifyForbidden  = &StdStatus{Status: 10, Msg: "data modification forbidden"}
-	StateDataExpired          = &StdStatus{Status: 11, Msg: "data expired"}
-	StateDataSizeInvalid      = &StdStatus{Status: 12, Msg: "data size invalid"}
-	StateDataTypeInvalid      = &StdStatus{Status: 13, Msg: "data type invalid"}
-	StateDataMediaInvalid     = &StdStatus{Status: 14, Msg: "data media invalid"}
+	StateServiceAccessBlocked = &StdStatus{Status: 2000, Msg: "service access blocked"}
+	StateParseParamFailed     = &StdStatus{Status: 2001, Msg: "parse parameter failed"}
+	StateParamInvalid         = &StdStatus{Status: 2002, Msg: "invalid parameter for request"}
+	StateProcessTimeout       = &StdStatus{Status: 2003, Msg: "processing timeout"}
+	StateProcessError         = &StdStatus{Status: 2004, Msg: "processing error"}
+	StateDataNotFound         = &StdStatus{Status: 2005, Msg: "data can not find"}
+	StateDataVerifyFailed     = &StdStatus{Status: 2006, Msg: "data verification failed"}
+	StateDataAccessBlocked    = &StdStatus{Status: 2007, Msg: "data access blocked"}
+	StateDataModifyForbidden  = &StdStatus{Status: 2008, Msg: "data modification forbidden"}
+	StateDataExpired          = &StdStatus{Status: 2009, Msg: "data expired"}
+	StateDataSizeInvalid      = &StdStatus{Status: 2010, Msg: "data size invalid"}
+	StateDataTypeInvalid      = &StdStatus{Status: 2011, Msg: "data type invalid"}
+	StateDataMediaInvalid     = &StdStatus{Status: 2012, Msg: "data media invalid"}
 )
 
 type StdStatus struct {
@@ -32,43 +32,85 @@ type StdStatus struct {
 	Msg    string `json:"msg"`
 }
 
-type StdResp struct {
+type StdResp interface {
+	Encode() ([]byte, error)
+	Decode(buf []byte) error
+	WriteTo(respw http.ResponseWriter) (int, error)
+}
+
+type JsonResp struct {
 	*StdStatus
 	Payload interface{} `json:"payload"`
 }
 
-func NewStdResp(status *StdStatus, payload interface{}) *StdResp {
-	return &StdResp{
+func NewJsonResp(status *StdStatus, payload interface{}) *JsonResp {
+	return &JsonResp{
 		StdStatus: status,
 		Payload:   payload,
 	}
 }
 
-func (this *StdResp) WriteJson(respw http.ResponseWriter) (n int, err error) {
-	var buf []byte
-	if buf, err = json.Marshal(this); err != nil {
+func (this *JsonResp) Encode() ([]byte, error) {
+	return json.Marshal(this)
+}
+
+func (this *JsonResp) Decode(buf []byte) error {
+	return json.Unmarshal(buf, this)
+}
+
+func (this *JsonResp) WriteTo(respw http.ResponseWriter) (int, error) {
+	var (
+		buf []byte
+		err error
+		n   int
+	)
+	if buf, err = this.Encode(); err != nil {
 		respw.WriteHeader(http.StatusInternalServerError)
 	} else {
 		respw.Header().Set("Content-Type", "application/json")
+
 		n, err = respw.Write(buf)
 	}
 
-	return
+	return n, err
 }
 
-func HandleResponse(resp *http.Response, err error) ([]byte, error) {
-	if err != nil {
-		return nil, err
+type GobResp struct {
+	*StdStatus
+	Payload interface{}
+}
+
+func NewGobResp(status *StdStatus, payload interface{}) *GobResp {
+	return &GobResp{
+		StdStatus: status,
+		Payload:   payload,
 	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status)
+}
+
+func (this *GobResp) Encode() ([]byte, error) {
+	var buf bytes.Buffer
+	err := gob.NewEncoder(&buf).Encode(this)
+
+	return buf.Bytes(), err
+}
+
+func (this *GobResp) Decode(buf []byte) error {
+	return gob.NewDecoder(bytes.NewReader(buf)).Decode(this)
+}
+
+func (this *GobResp) WriteTo(respw http.ResponseWriter) (int, error) {
+	var (
+		buf []byte
+		err error
+		n   int
+	)
+	if buf, err = this.Encode(); err != nil {
+		respw.WriteHeader(http.StatusInternalServerError)
+	} else {
+		respw.Header().Set("Content-Type", "application/octet-stream")
+
+		n, err = respw.Write(buf)
 	}
 
-	buf, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	resp.Body.Close()
-
-	return buf, nil
+	return n, err
 }
