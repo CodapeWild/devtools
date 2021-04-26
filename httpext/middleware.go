@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	Authorization                  = "X-Token"
+	Authorization                  = "Authorization"
 	Id_ContextKey                  = "ID_CTX"
 	MultipartFile_ContextKey       = "MultipartFILE_CTX"
 	MultipartFileHeader_ContextKey = "MultipartFileHeader_CTX"
@@ -39,7 +39,7 @@ func AfterLogin(handler http.Handler, sessToken session.SessToken) http.Handler 
 		if token := req.Header.Get(Authorization); sessToken.Verify(token) {
 			handler.ServeHTTP(respw, req)
 		} else {
-			NewJsonResp(StateDataExpired, nil).WriteTo(respw)
+			NewJsonResp(StateDataExpired, nil).Response(respw)
 		}
 	})
 }

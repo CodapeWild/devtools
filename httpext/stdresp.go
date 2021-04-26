@@ -35,7 +35,7 @@ type StdStatus struct {
 type StdResp interface {
 	Encode() ([]byte, error)
 	Decode(buf []byte) error
-	WriteTo(respw http.ResponseWriter) (int, error)
+	Response(respw http.ResponseWriter) (int, error)
 }
 
 type JsonResp struct {
@@ -58,7 +58,7 @@ func (this *JsonResp) Decode(buf []byte) error {
 	return json.Unmarshal(buf, this)
 }
 
-func (this *JsonResp) WriteTo(respw http.ResponseWriter) (int, error) {
+func (this *JsonResp) Response(respw http.ResponseWriter) (int, error) {
 	var (
 		buf []byte
 		err error
@@ -98,7 +98,7 @@ func (this *GobResp) Decode(buf []byte) error {
 	return gob.NewDecoder(bytes.NewReader(buf)).Decode(this)
 }
 
-func (this *GobResp) WriteTo(respw http.ResponseWriter) (int, error) {
+func (this *GobResp) Response(respw http.ResponseWriter) (int, error) {
 	var (
 		buf []byte
 		err error
