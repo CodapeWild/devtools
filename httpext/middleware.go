@@ -36,10 +36,10 @@ func PostOnly(handler http.Handler) http.Handler {
 
 func AfterLogin(handler http.Handler, sessToken session.SessToken) http.Handler {
 	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
-		if token := req.Header.Get(Authorization); sessToken.Verify(token) {
-			handler.ServeHTTP(respw, req)
+		if token := req.Header.Get(Authorization); !sessToken.Verify(token) {
+			NewJsonResp(StateTokenExpired, nil).Response(respw)
 		} else {
-			NewJsonResp(StateDataExpired, nil).Response(respw)
+			handler.ServeHTTP(respw, req)
 		}
 	})
 }
