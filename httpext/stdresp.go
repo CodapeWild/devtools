@@ -2,6 +2,7 @@ package httpext
 
 import (
 	"bytes"
+	"devtools/comerr"
 	"encoding/gob"
 	"encoding/json"
 	"net/http"
@@ -75,7 +76,11 @@ func (this *GobResp) Encode() ([]byte, error) {
 }
 
 func (this *GobResp) Decode(buf []byte) error {
-	return gob.NewDecoder(bytes.NewReader(buf)).Decode(this)
+	if this != nil {
+		return gob.NewDecoder(bytes.NewReader(buf)).Decode(this)
+	} else {
+		return comerr.NilPointer
+	}
 }
 
 func (this *GobResp) Response(respw http.ResponseWriter) (int, error) {

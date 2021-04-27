@@ -1,1 +1,5 @@
-[{"word":"a","hit":1},{"word":"ab","hit":1},{"word":"abc","hit":1}]
+[
+  { "word": "a", "hit": 1 },
+  { "word": "ab", "hit": 1 },
+  { "word": "abc", "hit": 1 }
+]

@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-var (
-	NilErr = ComErr("nil error")
-)
-
 type ComErr string
 
 func (this *ComErr) Mark() {
@@ -32,20 +28,12 @@ func (this *ComErr) Show() {
 	fmt.Printf("%c[1;0;35m###\n[%s]\n%s : %d\n[err_show:]\n<<%s\n>>\n###\n%c[0m", 0x1B, time.Now().Format("2006-01-02 15:04:05"), file, line, *this, 0x1B)
 }
 
-func ToComErr(errStr string) ComErr {
-	if errStr == "" {
-		return NilErr
-	}
-
-	return ComErr(errStr)
-}
-
 func ContextError(ctx context.Context) error {
 	switch ctx.Err() {
 	case context.Canceled:
-		return fmt.Errorf("process canceled")
+		return ProcessCanceled
 	case context.DeadlineExceeded:
-		return fmt.Errorf("deadline is exceeded")
+		return ProcessOvertime
 	default:
 		return nil
 	}
@@ -53,7 +41,7 @@ func ContextError(ctx context.Context) error {
 
 func LogError(err error) error {
 	if err != nil {
-		log.Println(err)
+		log.Println(err.Error())
 	}
 
 	return err

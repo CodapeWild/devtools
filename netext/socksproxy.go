@@ -9,6 +9,7 @@ import (
 )
 
 var (
+	HostLookupFailed      = errors.New("host lookup failed")
 	SocksRespError        = errors.New("socks server respond improperly")
 	SocksConnRejected     = errors.New("socks connection request rejected or failed")
 	SocksConnFailed       = errors.New("socks server cannot connect to identd")
@@ -99,7 +100,7 @@ func (this *socksConn) dialSocks4(target string) (net.Conn, error) {
 		return nil, err
 	}
 	if len(ips) == 0 {
-		return nil, comerr.HostLookupFailed
+		return nil, HostLookupFailed
 	}
 	ip := ips[0].To4()
 	if len(ip) != net.IPv4len {

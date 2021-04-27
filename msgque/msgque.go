@@ -114,7 +114,7 @@ func (this *MessageQueue) Send(msg Message) error {
 		if this.suspending {
 			return this.Send(msg)
 		} else {
-			return comerr.Overtime
+			return comerr.ProcessOvertime
 		}
 	case this.msgChan <- msg:
 		return nil
