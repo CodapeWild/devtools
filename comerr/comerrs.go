@@ -6,7 +6,7 @@ var (
 	NilPointer           = errors.New("nil pointer")
 	ParamInvalid         = errors.New("invalid parameter")
 	TypeInvalid          = errors.New("invalid type")
-	AssertiionFailed     = errors.New("type assertion failed")
+	AssertionFailed      = errors.New("type assertion failed")
 	IndexOutOfRange      = errors.New("index out of range")
 	ChannelClosed        = errors.New("channel closed")
 	DataConvertFailed    = errors.New("convert data failed")
