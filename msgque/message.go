@@ -1,9 +1,19 @@
 package msgque
 
-import "time"
+import (
+	"time"
+)
+
+type Message interface {
+	Id() interface{}   // used as fanout identify
+	Type() interface{} // use as fanout identity
+	MustInvoice() bool // message can be put into message queue wihtout fetching a ticket
+	Callback           // message processing result callback
+}
 
 type Callback interface {
 	Put(msg interface{}) bool
+	PutWithTimeout(msg interface{}, timeout time.Duration) bool
 	Wait() (msg interface{})
 }
 
@@ -14,6 +24,8 @@ func NewNoCallback() *NoCallback {
 }
 
 func (this NoCallback) Put(msg interface{}) bool { return false }
+
+func (this NoCallback) PutWithTimeout(msg interface{}, timeout time.Duration) bool { return false }
 
 func (this NoCallback) Wait() interface{} { return nil }
 
@@ -41,6 +53,10 @@ func (this *SimpleCallback) Put(msg interface{}) bool {
 		}
 	}
 
+	return false
+}
+
+func (this *SimpleCallback) PutWithTimeout(msg interface{}, timeout time.Duration) bool {
 	return false
 }
 

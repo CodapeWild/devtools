@@ -18,14 +18,6 @@ type FooMsg1 struct {
 	Callback
 }
 
-func (this *FooMsg1) Id() interface{} {
-	return this.MsgId
-}
-
-func (this *FooMsg1) Type() interface{} {
-	return fm1
-}
-
 func (this *FooMsg1) MustFetch() bool {
 	return true
 }
