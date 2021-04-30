@@ -1,3 +1,7 @@
-sample/
-frame/
-transcode/
+certificate/key
+certificate/sample
+command/sample
+ffmpegcmd/sample
+ffmpegcmd/frame
+ffmpegcmd/transcode
+fileque/data
