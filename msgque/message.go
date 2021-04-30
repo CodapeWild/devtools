@@ -4,17 +4,16 @@ import (
 	"time"
 )
 
+type Callback interface {
+	Put(msg interface{}) bool
+	PutWithTimeout(msg interface{}, timeout time.Duration) bool
+	Wait() (msg interface{})
+}
 type Message interface {
 	Id() interface{}   // used as fanout identify
 	Type() interface{} // use as fanout identity
 	MustInvoice() bool // message can be put into message queue wihtout fetching a ticket
 	Callback           // message processing result callback
-}
-
-type Callback interface {
-	Put(msg interface{}) bool
-	PutWithTimeout(msg interface{}, timeout time.Duration) bool
-	Wait() (msg interface{})
 }
 
 type NoCallback struct{}
@@ -46,10 +45,10 @@ func NewSimpleCallback(timeout time.Duration, timeoutCallback func() (msg interf
 func (this *SimpleCallback) Put(msg interface{}) bool {
 	if this.cbch != nil {
 		select {
-		case <-time.After(this.timeout):
-			return false
 		case this.cbch <- msg:
 			return true
+		case <-time.After(this.timeout):
+			return false
 		}
 	}
 

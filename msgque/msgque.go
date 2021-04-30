@@ -20,6 +20,11 @@ const (
 	MsgQ_Close
 )
 
+/*
+	ticket: ticket queue token
+		 msg: message
+  closer: message queue main gorotine closer
+*/
 type FanoutHandler func(ticket interface{}, msg Message, closer chan struct{})
 
 type critical struct {
@@ -95,7 +100,7 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 	// populate ticket queue
 	this.tq.Fill()
 
-	// message queue main goroutine
+	// message queue main fanout goroutine
 	go func() {
 		for v := range this.msgChan {
 			// check close
@@ -109,12 +114,12 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 			case <-this.crtl.suspend:
 				select {
 				case <-this.crtl.resume:
-					// clean up cache if not empty
-					if this.cache != nil && this.cache.Len() != 0 {
-						this.cleanCache()
-					}
 				}
 			default:
+			}
+			// check timeout cache up
+			if this.cache != nil && this.cache.Len() != 0 {
+				go this.cleanCache()
 			}
 
 			if v.MustInvoice() {
@@ -133,19 +138,23 @@ func (this *MessageQueue) Send(msg Message) error {
 	if this.status == MsgQ_Close {
 		return ErrMsgQClosed
 	}
+	if this.status == MsgQ_Suspend {
+		if !this.cache.Push(msg) {
+			return ErrCachePushFailed
+		}
+	}
 
 	var err error
 	select {
-	case <-time.After(this.timeout):
+	case this.msgChan <- msg: // message enqueue
+		return nil
+	case <-time.After(this.timeout): // message enqueue timeout, cache up if Cache exists
 		err = ErrMsgQEnqueOvertime
-		// cache up if exists
 		if this.cache != nil {
 			if !this.cache.Push(msg) {
 				err = ErrCachePushFailed
 			}
 		}
-	case this.msgChan <- msg:
-		return nil
 	}
 
 	return err
@@ -178,6 +187,11 @@ func (this *MessageQueue) Resume(token string) bool {
 		this.crtl.Lock()
 		defer this.crtl.Unlock()
 
+		// check suspend cache up
+		if this.cache != nil && this.cache.Len() != 0 {
+			this.cleanCache()
+		}
+
 		this.crtl.resume <- struct{}{}
 		this.crtl.token = ""
 		this.status = MsgQ_Open
@@ -198,11 +212,9 @@ func (this *MessageQueue) Status() MsgQStatus {
 }
 
 func (this *MessageQueue) cleanCache() {
-	go func() {
-		msg := this.cache.Pop()
-		for msg != nil {
-			this.msgChan <- msg.(Message)
-			msg = this.cache.Pop()
-		}
-	}()
+	msg := this.cache.Pop()
+	for msg != nil {
+		this.msgChan <- msg.(Message)
+		msg = this.cache.Pop()
+	}
 }
