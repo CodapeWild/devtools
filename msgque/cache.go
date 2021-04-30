@@ -15,7 +15,7 @@ type MemCache struct {
 	sync.Mutex
 }
 
-func (this MemCache) Push(obj interface{}) bool {
+func (this *MemCache) Push(obj interface{}) bool {
 	this.Lock()
 	defer this.Unlock()
 
@@ -24,7 +24,7 @@ func (this MemCache) Push(obj interface{}) bool {
 	return true
 }
 
-func (this MemCache) Pop() interface{} {
+func (this *MemCache) Pop() interface{} {
 	var tmp interface{}
 	if len(this.mem) != 0 {
 		this.Lock()
@@ -37,7 +37,7 @@ func (this MemCache) Pop() interface{} {
 	return tmp
 }
 
-func (this MemCache) Len() int {
+func (this *MemCache) Len() int {
 	this.Lock()
 	defer this.Unlock()
 
