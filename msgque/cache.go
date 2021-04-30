@@ -5,7 +5,7 @@ import (
 )
 
 type Cache interface {
-	Push(interface{}) bool
+	Push(obj interface{}) bool
 	Pop() interface{}
 	Len() int
 }

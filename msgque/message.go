@@ -5,9 +5,9 @@ import (
 )
 
 type Callback interface {
-	Put(msg interface{}) bool
-	PutWithTimeout(msg interface{}, timeout time.Duration) bool
-	Wait() (msg interface{})
+	Call(rslt interface{})
+	CallWithTimeout(rslt interface{}, timeout time.Duration) error
+	Wait(timeout time.Duration) (rslt interface{}, err error)
 }
 type Message interface {
 	Id() interface{}   // used as fanout identify
@@ -22,51 +22,42 @@ func NewNoCallback() *NoCallback {
 	return &NoCallback{}
 }
 
-func (this NoCallback) Put(msg interface{}) bool { return false }
+func (this NoCallback) Call(interface{}) bool { return false }
 
-func (this NoCallback) PutWithTimeout(msg interface{}, timeout time.Duration) bool { return false }
+func (this NoCallback) CallWithTimeout(interface{}, time.Duration) error { return nil }
 
-func (this NoCallback) Wait() interface{} { return nil }
+func (this NoCallback) Wait(time.Duration) (error, interface{}) { return nil, nil }
 
-type SimpleCallback struct {
-	cbch            chan interface{}
-	timeout         time.Duration
-	timeoutCallback func() (msg interface{})
+type SimpleCallback chan interface{}
+
+func NewSimpleCallback() SimpleCallback {
+	return make(chan interface{})
 }
 
-func NewSimpleCallback(timeout time.Duration, timeoutCallback func() (msg interface{})) *SimpleCallback {
-	return &SimpleCallback{
-		cbch:            make(chan interface{}),
-		timeout:         timeout,
-		timeoutCallback: timeoutCallback,
+func (this SimpleCallback) Call(rslt interface{}) {
+	if this != nil {
+		this <- rslt
 	}
 }
 
-func (this *SimpleCallback) Put(msg interface{}) bool {
-	if this.cbch != nil {
+func (this SimpleCallback) CallWithTimeout(rslt interface{}, timeout time.Duration) (err error) {
+	if this != nil {
 		select {
-		case this.cbch <- msg:
-			return true
-		case <-time.After(this.timeout):
-			return false
+		case this <- rslt:
+		case <-time.After(timeout):
+			err = ErrCallbackSendTimeout
 		}
 	}
 
-	return false
+	return
 }
 
-func (this *SimpleCallback) PutWithTimeout(msg interface{}, timeout time.Duration) bool {
-	return false
-}
-
-func (this *SimpleCallback) Wait() (msg interface{}) {
-	if this.cbch != nil {
+func (this SimpleCallback) Wait(timeout time.Duration) (rslt interface{}, err error) {
+	if this != nil {
 		select {
-		case <-time.After(this.timeout):
-			if this.timeoutCallback != nil {
-				msg = this.timeoutCallback()
-			}
-		case msg = <-this.cbch:
+		case rslt = <-this:
+		case <-time.After(timeout):
+			err = ErrCallbackReceiveTimeout
 		}
 	}
 
