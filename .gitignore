@@ -1,7 +1,8 @@
-certificate/key
+.vscode
 certificate/sample
+certificate/key
 command/sample
-ffmpegcmd/sample
 ffmpegcmd/frame
+ffmpegcmd/sample
 ffmpegcmd/transcode
 fileque/data

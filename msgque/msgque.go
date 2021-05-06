@@ -1,62 +1,91 @@
 package msgque
 
 import (
-	"devtools/comerr"
-	"log"
+	"devtools/code"
+	"sync"
 	"time"
 )
 
 const (
 	def_que_buffer   int           = 6
-	def_send_timeout time.Duration = time.Second
+	def_msgq_timeout time.Duration = time.Second
 )
 
-type Message interface {
-	Id() interface{}
-	Type() interface{}
-	MustFetch() bool
-	Callback
+type MsgQStatus int
+
+const (
+	MsgQ_Open MsgQStatus = iota + 1
+	MsgQ_Congest
+	MsgQ_Suspend
+	MsgQ_Close
+)
+
+/*
+	ticket: ticket queue token
+		 msg: message
+  closer: message queue main gorotine closer
+*/
+type FanoutHandler func(ticket interface{}, msg Message, closer chan struct{})
+
+type critical struct {
+	suspend, resume chan struct{}
+	token           string
+	sync.Mutex
 }
 
-type FanoutHandler func(ticket interface{}, msg Message)
-
 type MessageQueue struct {
-	msgChan     chan Message
-	queBuf      int
-	sendTimeout time.Duration
-	TicketQueue
-	suspending bool
-	resume     chan int
-	closer     chan int
+	tq      TicketQueue
+	cache   Cache
+	msgChan chan Message
+	queBuf  int
+	timeout time.Duration
+	crtl    critical
+	closer  chan struct{}
+	status  MsgQStatus
 }
 
 type MessageQueueSetting func(msgQ *MessageQueue)
 
-func SetQueueBuffer(queBuf int) MessageQueueSetting {
-	return func(msgQ *MessageQueue) {
-		msgQ.queBuf = queBuf
+func SetMsgQTicket(tickq TicketQueue) MessageQueueSetting {
+	return func(msgq *MessageQueue) {
+		msgq.tq = tickq
 	}
 }
 
-func SetTimeout(timeout time.Duration) MessageQueueSetting {
-	return func(msgQ *MessageQueue) {
-		msgQ.sendTimeout = timeout
+func SetMsgQCache(cache Cache) MessageQueueSetting {
+	return func(msgq *MessageQueue) {
+		msgq.cache = cache
 	}
 }
 
-func SetTicket(tick TicketQueue) MessageQueueSetting {
-	return func(msgQ *MessageQueue) {
-		msgQ.TicketQueue = tick
+func SetMsgQBuffer(queBuf int) MessageQueueSetting {
+	return func(msgq *MessageQueue) {
+		msgq.queBuf = queBuf
+	}
+}
+
+func SetMsgQTimeout(timeout time.Duration) MessageQueueSetting {
+	return func(msgq *MessageQueue) {
+		msgq.timeout = timeout
+	}
+}
+
+func SetMsgQStatus(status MsgQStatus) MessageQueueSetting {
+	return func(msgq *MessageQueue) {
+		msgq.status = status
 	}
 }
 
 func NewMessageQueue(opt ...MessageQueueSetting) *MessageQueue {
 	msgQ := &MessageQueue{
-		queBuf:      def_que_buffer,
-		sendTimeout: def_send_timeout,
-		suspending:  false,
-		resume:      make(chan int),
-		closer:      make(chan int),
+		queBuf:  def_que_buffer,
+		timeout: def_msgq_timeout,
+		crtl: critical{
+			suspend: make(chan struct{}),
+			resume:  make(chan struct{}),
+		},
+		closer: make(chan struct{}),
+		status: MsgQ_Open,
 	}
 	for _, v := range opt {
 		v(msgQ)
@@ -68,70 +97,124 @@ func NewMessageQueue(opt ...MessageQueueSetting) *MessageQueue {
 }
 
 func (this *MessageQueue) StartUp(fanout FanoutHandler) {
-	this.Fill()
+	// populate ticket queue
+	this.tq.Fill()
 
+	// message queue main fanout goroutine
 	go func() {
 		for v := range this.msgChan {
-			if v == nil {
-				close(this.msgChan)
-
+			// check close
+			select {
+			case <-this.closer:
 				return
+			default:
+			}
+			// check suspend
+			select {
+			case <-this.crtl.suspend:
+				select {
+				case <-this.crtl.resume:
+				}
+			default:
+			}
+			// check timeout cache up
+			if this.cache != nil && this.cache.Len() != 0 {
+				go this.cleanCache()
 			}
 
-			if this.suspending {
-				log.Println("message queue suspending")
-				<-this.resume
-				log.Println("message queue resumed")
-			}
-
-			if v.MustFetch() {
+			if v.MustInvoice() {
 				go func(ticket interface{}, msg Message) {
-					fanout(ticket, msg)
-					this.Restore(ticket)
-				}(this.Fetch(), v)
+					fanout(ticket, msg, this.closer)
+					this.tq.Restore(ticket)
+				}(this.tq.Fetch(), v)
 			} else {
-				go fanout(nil, v)
+				go fanout(nil, v, this.closer)
 			}
 		}
 	}()
 }
 
 func (this *MessageQueue) Send(msg Message) error {
-	if msg == nil {
-		return comerr.ParamInvalid
+	if this.status == MsgQ_Close {
+		return ErrMsgQClosed
 	}
-
-	select {
-	case <-this.closer:
-		return comerr.ChannelClosed
-	default:
-	}
-
-	select {
-	case <-this.closer:
-		return comerr.ChannelClosed
-	case <-time.After(this.sendTimeout):
-		if this.suspending {
-			return this.Send(msg)
-		} else {
-			return comerr.ProcessOvertime
+	if this.status == MsgQ_Suspend {
+		if !this.cache.Push(msg) {
+			return ErrCachePushFailed
 		}
-	case this.msgChan <- msg:
-		return nil
 	}
+
+	var err error
+	select {
+	case this.msgChan <- msg: // message enqueue
+		return nil
+	case <-time.After(this.timeout): // message enqueue timeout, cache up if Cache exists
+		err = ErrMsgQEnqueOvertime
+		if this.cache != nil {
+			if !this.cache.Push(msg) {
+				err = ErrCachePushFailed
+			}
+		}
+	}
+
+	return err
 }
 
-func (this *MessageQueue) Suspend() {
-	this.suspending = true
+func (this *MessageQueue) Suspend() (string, bool) {
+	var (
+		token string
+		ok    bool
+	)
+	if this.crtl.token == "" {
+		this.crtl.Lock()
+		defer this.crtl.Unlock()
+
+		this.crtl.suspend <- struct{}{}
+		this.crtl.token = code.RandBase64(32)
+
+		token = this.crtl.token
+		ok = true
+
+		this.status = MsgQ_Suspend
+	}
+
+	return token, ok
 }
 
-func (this *MessageQueue) Resume() {
-	this.resume <- 1
-	this.suspending = false
+func (this *MessageQueue) Resume(token string) bool {
+	var ok bool
+	if this.crtl.token == token {
+		this.crtl.Lock()
+		defer this.crtl.Unlock()
+
+		// check suspend cache up
+		if this.cache != nil && this.cache.Len() != 0 {
+			this.cleanCache()
+		}
+
+		this.crtl.resume <- struct{}{}
+		this.crtl.token = ""
+		this.status = MsgQ_Open
+
+		ok = true
+	}
+
+	return ok
 }
 
 func (this *MessageQueue) Close() {
 	close(this.closer)
-	this.msgChan <- nil
-	<-this.msgChan
+	this.status = MsgQ_Close
+}
+
+func (this *MessageQueue) Status() MsgQStatus {
+	return this.status
+}
+
+func (this *MessageQueue) cleanCache() {
+	msg := this.cache.Pop()
+	for msg != nil {
+		this.msgChan <- msg.(Message)
+		msg = this.cache.Pop()
+	}
 }
