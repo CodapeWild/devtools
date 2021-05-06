@@ -53,3 +53,20 @@ func PostJson(rawurl string, req, resp interface{}) (status int, err error) {
 
 	return status, json.Unmarshal(buf, resp)
 }
+
+func HandleJsonResponse(resp *http.Response, err error) ([]byte, error) {
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(resp.Status)
+	}
+
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	resp.Body.Close()
+
+	return buf, nil
+}

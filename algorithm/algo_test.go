@@ -77,3 +77,71 @@ func TestTrie(t *testing.T) {
 	}
 	ShowTrie(root1fromjson)
 }
+
+func makeChange(denomi []int, n int, remain int) int {
+	if remain == 0 {
+		return 1
+	}
+	if n < 0 {
+		return 0
+	}
+	if remain < denomi[n] {
+		return makeChange(denomi, n-1, remain)
+	}
+
+	var count int
+	for i := 0; remain-i*denomi[n] >= 0; i++ {
+		count += makeChange(denomi, n-1, remain-i*denomi[n])
+	}
+
+	return count
+}
+
+func TestMakeChange(t *testing.T) {
+	denomi := []int{1, 2, 5, 10, 15, 50}
+	log.Println(makeChange(denomi, len(denomi)-1, 3))
+}
+
+func permuteHandlerTest(data []int, p []int, output chan []int) {
+	if len(data) == 0 {
+		output <- p
+	} else {
+		for i := 0; i < len(data); i++ {
+			ptmp := make([]int, len(p))
+			copy(ptmp, p)
+			ptmp = append(ptmp, data[i])
+
+			datatmp := make([]int, len(data))
+			copy(datatmp, data)
+			datatmp[i] = datatmp[len(datatmp)-1]
+
+			permuteHandlerTest(datatmp[:len(datatmp)-1], ptmp, output)
+		}
+	}
+}
+
+func permute(data []int, output chan []int) {
+	permuteHandlerTest(data, nil, output)
+}
+
+func TestPermute(t *testing.T) {
+	data := []int{1, 2, 3, 4, 5, 6}
+	output := make(chan []int)
+	go func() {
+		for v := range output {
+			log.Println(v)
+		}
+	}()
+	permute(data, output)
+}
+
+func TestPermute1(t *testing.T) {
+	data := IntsPermutable([]int{1, 2, 3, 4, 5, 6, 7, 8, 9})
+	output := make(chan interface{})
+	go func() {
+		for v := range output {
+			log.Println(v)
+		}
+	}()
+	Permute(data, output)
+}
