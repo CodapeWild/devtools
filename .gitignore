@@ -5,3 +5,4 @@ ffmpegcmd/sample
 ffmpegcmd/frame
 ffmpegcmd/transcode
 fileque/data
+.DS_Store
