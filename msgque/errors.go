@@ -3,6 +3,7 @@ package msgque
 import "errors"
 
 var (
+	ErrMsgQSuspended     = errors.New("message queue suspended")
 	ErrMsgQClosed        = errors.New("message queue closed")
 	ErrMsgQEnqueOvertime = errors.New("message enqueue process overtime")
 )
