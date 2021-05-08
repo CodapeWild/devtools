@@ -79,7 +79,7 @@ func (this *GobResp) Decode(buf []byte) error {
 	if this != nil {
 		return gob.NewDecoder(bytes.NewReader(buf)).Decode(this)
 	} else {
-		return comerr.NilPointer
+		return comerr.ErrNilPointer
 	}
 }
 

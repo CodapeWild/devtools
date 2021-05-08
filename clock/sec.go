@@ -15,7 +15,7 @@ func NowMillisec() int64 {
 func ParseSeconds(s string) (int, error) {
 	p := strings.Split(s, ":")
 	if len(p) > 3 {
-		return 0, comerr.ParamInvalid
+		return 0, comerr.ErrParamInvalid
 	}
 	opters := []int{1, 60, 3600}
 	j := 0

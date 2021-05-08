@@ -135,7 +135,7 @@ func (this *FileQueue) fileFanout(ticket interface{}, msg msgque.Message) {
 	case del_file_msg:
 		this.delFile(msg.(*DelMsg))
 	default:
-		log.Println(comerr.TypeInvalid)
+		log.Println(comerr.ErrTypeInvalid)
 	}
 }
 
@@ -188,7 +188,7 @@ func (this *FileQueue) findFile(msg *FindMsg) {
 	} else if len(ms) != 1 {
 		msg.Put(&CallbackMsg{
 			Status: FileQue_Failed,
-			Msg:    comerr.NotFound.Error(),
+			Msg:    comerr.ErrNotFound.Error(),
 		})
 	} else {
 		m := ms[0]
@@ -244,7 +244,7 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 	} else if len(ms) != 1 {
 		msg.Put(&CallbackMsg{
 			Status: FileQue_Failed,
-			Msg:    comerr.NotFound.Error(),
+			Msg:    comerr.ErrNotFound.Error(),
 		})
 	} else {
 		this.Suspend()
@@ -319,7 +319,7 @@ func (this *FileQueue) delFile(msg *DelMsg) {
 				} else if len(ms) != 1 {
 					cbMsg = &CallbackMsg{
 						Status: FileQue_Failed,
-						Msg:    comerr.NotFound.Error(),
+						Msg:    comerr.ErrNotFound.Error(),
 					}
 				} else if err = updateDirCapacity(this.fqdb, ms[0].FId, ms[0].Capacity-1); err != nil {
 					cbMsg = &CallbackMsg{

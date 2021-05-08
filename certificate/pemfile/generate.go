@@ -94,7 +94,7 @@ func EncKeyBlock(key interface{}, kf KeyFileType, pswd string, alg x509.PEMCiphe
 
 func WritePemTo(out io.Writer, bc *pem.Block) error {
 	if out == nil || bc == nil {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	return pem.Encode(out, bc)
@@ -178,7 +178,7 @@ func SetCertTemp(confPath string) (*x509.Certificate, error) {
 
 func GenCertificatePem(filePath string, issuerTemp, signerCrt *x509.Certificate, signerPriv interface{}) (issuerCrt *x509.Certificate, issuerDer []byte, issuerPriv *rsa.PrivateKey, err error) {
 	if issuerTemp == nil {
-		return nil, nil, nil, comerr.ParamInvalid
+		return nil, nil, nil, comerr.ErrParamInvalid
 	}
 
 	issuerPriv, err = secure.GenRSAPrivateKey(2048)

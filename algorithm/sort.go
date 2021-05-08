@@ -43,7 +43,7 @@ func QuickSortOverall(data sort.Interface) {
 
 func QuickLocate(data sort.Interface, ith int) error {
 	if data == nil || data.Len() <= ith {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	var (
