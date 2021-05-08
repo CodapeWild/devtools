@@ -98,23 +98,23 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 
 func (this *MessageQueue) Send(msg Message) error {
 	if msg == nil {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	select {
 	case <-this.closer:
-		return comerr.ChannelClosed
+		return comerr.ErrChannelClosed
 	default:
 	}
 
 	select {
 	case <-this.closer:
-		return comerr.ChannelClosed
+		return comerr.ErrChannelClosed
 	case <-time.After(this.sendTimeout):
 		if this.suspending {
 			return this.Send(msg)
 		} else {
-			return comerr.ProcessOvertime
+			return comerr.ErrProcessOvertime
 		}
 	case this.msgChan <- msg:
 		return nil

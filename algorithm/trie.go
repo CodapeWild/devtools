@@ -220,14 +220,14 @@ func TrieFromJson(r io.Reader) (root *TrieNode, err error) {
 		return nil, err
 	}
 	if len(tj) == 0 {
-		return nil, comerr.EmptyData
+		return nil, comerr.ErrEmptyData
 	}
 
 	root = NewTrieNode(TrieString(tj[0].Word), tj[0].Hit, nil)
 	for _, node := range tj {
 		root.Add(TrieString(node.Word))
 		if n, ok := root.Find(TrieString(node.Word)); !ok {
-			return nil, comerr.ProcessFailed
+			return nil, comerr.ErrProcessFailed
 		} else {
 			n.Hit = node.Hit
 		}

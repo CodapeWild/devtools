@@ -31,7 +31,7 @@ const (
 // socks5://user:pswd@127.0.0.1:1080
 func SSProxyDialFunc(pxuri *url.URL, timeout time.Duration) func(network, addr string) (net.Conn, error) {
 	if pxuri.Scheme != SOCKS4 && pxuri.Scheme != SOCKS5 && pxuri.Scheme != SOCKS4A {
-		return dialError(comerr.UnrecognizedProtocol)
+		return dialError(comerr.ErrUnrecognizedProtocol)
 	}
 
 	conn, err := net.Dial("tcp", pxuri.Host)
@@ -68,7 +68,7 @@ func (this *socksConn) dial(target string) (net.Conn, error) {
 		return this.dialSocks5(target)
 	}
 
-	return nil, comerr.UnrecognizedProtocol
+	return nil, comerr.ErrUnrecognizedProtocol
 }
 
 func (this *socksConn) query(req []byte) (resp []byte, err error) {
@@ -104,7 +104,7 @@ func (this *socksConn) dialSocks4(target string) (net.Conn, error) {
 	}
 	ip := ips[0].To4()
 	if len(ip) != net.IPv4len {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 
 	req := []byte{

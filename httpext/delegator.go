@@ -17,7 +17,7 @@ var defClient = &http.Client{Timeout: time.Second}
 // post and receive json data
 func PostJson(rawurl string, req, resp interface{}) (status int, err error) {
 	if resp == nil || reflect.TypeOf(resp).Kind() != reflect.Ptr {
-		return http.StatusBadRequest, comerr.ParamInvalid
+		return http.StatusBadRequest, comerr.ErrParamInvalid
 	}
 
 	var u *url.URL

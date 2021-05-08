@@ -15,10 +15,10 @@ func ReadJsonFile(filePath string, out interface{}) error {
 		return FileNotExists
 	}
 	if out == nil {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 	if v := reflect.TypeOf(out); v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
-		return comerr.TypeInvalid
+		return comerr.ErrTypeInvalid
 	}
 
 	if buf, err := ioutil.ReadFile(filePath); err != nil {
@@ -45,7 +45,7 @@ func ReadGoTplFile(param interface{}, funcMap template.FuncMap, w io.Writer, nam
 			k = t.Elem().Kind()
 		}
 		if k != reflect.Struct && k != reflect.Map {
-			return comerr.ParamInvalid
+			return comerr.ErrParamInvalid
 		}
 	}
 

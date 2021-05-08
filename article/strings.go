@@ -58,7 +58,7 @@ func FoldByMax(src string, maxLineChars int) string {
 
 func GoTemplateReplace(tmpl string, param interface{}) (string, error) {
 	if param == nil {
-		return "", comerr.ParamInvalid
+		return "", comerr.ErrParamInvalid
 	} else {
 		t := reflect.TypeOf(param)
 		k := t.Kind()
@@ -66,7 +66,7 @@ func GoTemplateReplace(tmpl string, param interface{}) (string, error) {
 			k = t.Elem().Kind()
 		}
 		if k != reflect.Struct && k != reflect.Map {
-			return "", comerr.ParamInvalid
+			return "", comerr.ErrParamInvalid
 		}
 	}
 
@@ -134,7 +134,7 @@ func FindUInt(s string) (num uint, end int, err error) {
 		}
 	}
 
-	return num, 0, comerr.NotFound
+	return num, 0, comerr.ErrNotFound
 }
 
 func Merge(ss []string, sep string) string {

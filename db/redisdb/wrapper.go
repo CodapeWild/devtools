@@ -54,7 +54,7 @@ func (this *RedisWrapper) Keys(pattern string) ([]string, error) {
 	}
 	rslt, ok := rply.([]interface{})
 	if !ok {
-		return nil, comerr.TypeInvalid
+		return nil, comerr.ErrTypeInvalid
 	}
 
 	keys := make([]string, len(rslt))
@@ -98,7 +98,7 @@ func (this *RedisWrapper) Get(key string) (interface{}, error) {
 
 func (this *RedisWrapper) MSet(compound interface{}) (interface{}, error) {
 	if compound == nil {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 	var (
 		t    = reflect.TypeOf(compound)
@@ -110,7 +110,7 @@ func (this *RedisWrapper) MSet(compound interface{}) (interface{}, error) {
 		k = t.Kind()
 	}
 	if k != reflect.Struct && k != reflect.Map {
-		return nil, comerr.TypeInvalid
+		return nil, comerr.ErrTypeInvalid
 	} else {
 		args = args.AddFlat(compound)
 	}
@@ -168,7 +168,7 @@ func (this *RedisWrapper) HGet(key string, field interface{}) (interface{}, erro
 
 func (this *RedisWrapper) HMSet(key string, compound interface{}) (interface{}, error) {
 	if compound == nil {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 	var (
 		t    = reflect.TypeOf(compound)
@@ -180,7 +180,7 @@ func (this *RedisWrapper) HMSet(key string, compound interface{}) (interface{}, 
 		k = t.Kind()
 	}
 	if k != reflect.Map && k != reflect.Struct {
-		return nil, comerr.TypeInvalid
+		return nil, comerr.ErrTypeInvalid
 	} else {
 		args = args.Add(key).AddFlat(compound)
 	}
@@ -204,10 +204,10 @@ func (this *RedisWrapper) HMGet(key string, fields ...interface{}) (interface{},
 
 func (this *RedisWrapper) HScanStruct(key string, dst interface{}) error {
 	if dst == nil {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 	if t := reflect.TypeOf(dst); t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Struct {
-		return comerr.TypeInvalid
+		return comerr.ErrTypeInvalid
 	}
 
 	conn := this.Session()
@@ -219,7 +219,7 @@ func (this *RedisWrapper) HScanStruct(key string, dst interface{}) error {
 	}
 	src := rply.([]interface{})
 	if len(src) == 0 {
-		return comerr.NotFound
+		return comerr.ErrNotFound
 	}
 
 	return redis.ScanStruct(src, dst)
@@ -261,7 +261,7 @@ func (this *RedisWrapper) RPopLPush(src, dst string) (interface{}, error) {
 
 func (this *RedisWrapper) BLPop(key string, timeout int) (interface{}, error) {
 	if timeout < 0 {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 
 	return this.bpop("blpop", key, timeout)
@@ -269,7 +269,7 @@ func (this *RedisWrapper) BLPop(key string, timeout int) (interface{}, error) {
 
 func (this *RedisWrapper) BRPop(key string, timeout int) (interface{}, error) {
 	if timeout < 0 {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 
 	return this.bpop("brpop", key, timeout)
@@ -277,7 +277,7 @@ func (this *RedisWrapper) BRPop(key string, timeout int) (interface{}, error) {
 
 func (this *RedisWrapper) BRPopLPush(src, dst string, timeout int) (interface{}, error) {
 	if timeout < 0 {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 
 	conn := this.Session()
@@ -297,7 +297,7 @@ func (this *RedisWrapper) LRemove(key string, count int, value interface{}) erro
 
 func (this *RedisWrapper) push(cmd string, key string, values ...interface{}) (interface{}, error) {
 	if cmd != "lpush" && cmd != "rpush" {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 
 	conn := this.Session()
@@ -308,7 +308,7 @@ func (this *RedisWrapper) push(cmd string, key string, values ...interface{}) (i
 
 func (this *RedisWrapper) pop(cmd string, key string) (interface{}, error) {
 	if cmd != "lpop" && cmd != "rpop" {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 
 	conn := this.Session()
@@ -319,7 +319,7 @@ func (this *RedisWrapper) pop(cmd string, key string) (interface{}, error) {
 
 func (this *RedisWrapper) bpop(cmd string, key string, timeout int) (interface{}, error) {
 	if cmd != "blpop" && cmd != "brpop" {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 
 	conn := this.Session()

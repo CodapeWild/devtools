@@ -13,7 +13,7 @@ type Command struct {
 
 func (this *Command) StdoutJson(output interface{}) error {
 	if output == nil || reflect.TypeOf(output).Kind() != reflect.Ptr {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	if stdout, err := this.StdoutPipe(); err != nil {
