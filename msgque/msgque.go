@@ -117,10 +117,8 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 				}
 			default:
 			}
-			// check timeout cache up
-			if this.cache != nil && this.cache.Len() != 0 {
-				go this.cleanCache()
-			}
+			// check timeout cache up buffer
+			go this.cleanCache()
 
 			if v.MustInvoice() {
 				go func(ticket interface{}, msg Message) {
@@ -161,25 +159,22 @@ func (this *MessageQueue) Send(msg Message) error {
 	return err
 }
 
-func (this *MessageQueue) Suspend() (string, bool) {
-	var (
-		token string
-		ok    bool
-	)
-	if this.crtl.token == "" {
-		this.crtl.Lock()
-		defer this.crtl.Unlock()
-
-		this.crtl.suspend <- struct{}{}
-		this.crtl.token = code.RandBase64(32)
-
-		token = this.crtl.token
-		ok = true
-
-		this.status = MsgQ_Suspend
+/*
+	Suspend() will return token if
+*/
+func (this *MessageQueue) Suspend() string {
+	if this.status == MsgQ_Suspend {
+		return this.crtl.token
 	}
 
-	return token, ok
+	this.crtl.Lock()
+	defer this.crtl.Unlock()
+
+	this.crtl.suspend <- struct{}{}
+	this.crtl.token = code.RandBase64(32)
+	this.status = MsgQ_Suspend
+
+	return this.crtl.token
 }
 
 func (this *MessageQueue) Resume(token string) bool {
@@ -189,9 +184,7 @@ func (this *MessageQueue) Resume(token string) bool {
 		defer this.crtl.Unlock()
 
 		// check suspend cache up
-		if this.cache != nil && this.cache.Len() != 0 {
-			this.cleanCache()
-		}
+		go this.cleanCache()
 
 		this.crtl.resume <- struct{}{}
 		this.crtl.token = ""
@@ -213,9 +206,11 @@ func (this *MessageQueue) Status() MsgQStatus {
 }
 
 func (this *MessageQueue) cleanCache() {
-	msg := this.cache.Pop()
-	for msg != nil {
-		this.msgChan <- msg.(Message)
-		msg = this.cache.Pop()
+	if this.cache != nil && this.cache.Len() != 0 {
+		msg := this.cache.Pop()
+		for msg != nil {
+			this.msgChan <- msg.(Message)
+			msg = this.cache.Pop()
+		}
 	}
 }

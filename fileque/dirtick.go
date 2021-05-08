@@ -16,7 +16,7 @@ type DirTicket struct {
 }
 
 type DirTicketQueue struct {
-	*msgque.SimpleTicketQueue
+	msgque.SimpleTicketQueue
 	topDir      string
 	dirMode     os.FileMode
 	dirCapacity int
