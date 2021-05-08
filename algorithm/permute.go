@@ -1,26 +1,31 @@
 package algorithm
 
 type Permutable interface {
+	NewEmpty() Permutable
 	Len() int
-	NewEmpty() interface{}
-	Copy() interface{}
-	Append(interface{}) interface{}
-	At(int) interface{}
-	Remove(int) interface{}
+	Copy() Permutable
+	Append(value interface{}) Permutable
+	At(i int) interface{}
+	Set(i int, value interface{})
+	Range(i, j int) Permutable
 }
 
 func permuteHandler(src Permutable, permutation Permutable, output chan interface{}) {
+	if src == nil {
+		return
+	}
+
 	if src.Len() == 0 {
 		output <- permutation
 	} else {
 		for i := 0; i < src.Len(); i++ {
-			ptmp := permutation.Copy().(Permutable)
-			ptmp = ptmp.Append(src.At(i)).(Permutable)
+			pertmp := permutation.Copy().(Permutable)
+			pertmp = pertmp.Append(src.At(i)).(Permutable)
 
 			srctmp := src.Copy().(Permutable)
-			srctmp = srctmp.Remove(i).(Permutable)
+			srctmp.Set(i, srctmp.At(srctmp.Len()-1))
 
-			permuteHandler(srctmp, ptmp, output)
+			permuteHandler(srctmp.Range(0, srctmp.Len()-1), pertmp, output)
 		}
 	}
 }
@@ -29,33 +34,48 @@ func Permute(src Permutable, output chan interface{}) {
 	permuteHandler(src, src.NewEmpty().(Permutable), output)
 }
 
+/*
+	ints permutable array
+*/
 type IntsPermutable []int
+
+func (this IntsPermutable) NewEmpty() Permutable {
+	return IntsPermutable{}
+}
 
 func (this IntsPermutable) Len() int {
 	return len(this)
 }
 
-func (this IntsPermutable) NewEmpty() interface{} {
-	return IntsPermutable([]int{})
-}
-
-func (this IntsPermutable) Copy() interface{} {
+func (this IntsPermutable) Copy() Permutable {
 	tmp := make([]int, len(this))
 	copy(tmp, this)
 
 	return IntsPermutable(tmp)
 }
 
-func (this IntsPermutable) Append(a interface{}) interface{} {
-	return append(this, a.(int))
+func (this IntsPermutable) Append(value interface{}) Permutable {
+	return append(this, value.(int))
 }
 
 func (this IntsPermutable) At(i int) interface{} {
-	return this[i]
+	if i >= 0 && i < len(this) {
+		return this[i]
+	} else {
+		return nil
+	}
 }
 
-func (this IntsPermutable) Remove(i int) interface{} {
-	this[i] = this[len(this)-1]
+func (this IntsPermutable) Set(i int, value interface{}) {
+	if i >= 0 && i < len(this) {
+		this[i] = value.(int)
+	}
+}
 
-	return this[:len(this)-1]
+func (this IntsPermutable) Range(i, j int) Permutable {
+	if i >= 0 && i < len(this) && j >= i {
+		return this[i:j]
+	} else {
+		return nil
+	}
 }
