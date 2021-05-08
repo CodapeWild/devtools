@@ -30,7 +30,7 @@ type IdFlaker struct {
 
 func NewIdFlaker(id int64) (*IdFlaker, error) {
 	if id < 0 || id > 255 {
-		return nil, comerr.IndexOutOfRange
+		return nil, comerr.ErrIndexOutOfRange
 	}
 
 	return &IdFlaker{id: id << 53}, nil

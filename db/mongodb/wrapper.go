@@ -40,10 +40,10 @@ func (this *MgoWrapper) Insert(col string, doc ...interface{}) error {
 
 func (this *MgoWrapper) FindById(col string, id interface{}, rslt interface{}) error {
 	if rslt == nil {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 	if reflect.TypeOf(rslt).Kind() != reflect.Ptr {
-		return comerr.TypeInvalid
+		return comerr.ErrTypeInvalid
 	}
 
 	db := this.ConnDB()
@@ -54,10 +54,10 @@ func (this *MgoWrapper) FindById(col string, id interface{}, rslt interface{}) e
 
 func (this *MgoWrapper) FindOne(col string, query interface{}, rslt interface{}) error {
 	if rslt == nil {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 	if reflect.TypeOf(rslt).Kind() != reflect.Ptr {
-		return comerr.TypeInvalid
+		return comerr.ErrTypeInvalid
 	}
 
 	db := this.ConnDB()
@@ -68,7 +68,7 @@ func (this *MgoWrapper) FindOne(col string, query interface{}, rslt interface{})
 
 func (this *MgoWrapper) FindAll(col string, query interface{}, skip, limit int, rslt interface{}) error {
 	if t := reflect.TypeOf(rslt); t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Slice {
-		return comerr.TypeInvalid
+		return comerr.ErrTypeInvalid
 	}
 
 	db := this.ConnDB()
@@ -79,10 +79,10 @@ func (this *MgoWrapper) FindAll(col string, query interface{}, skip, limit int, 
 
 func (this *MgoWrapper) FindTopOne(col string, query interface{}, orderBy string, rslt interface{}) error {
 	if rslt == nil {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 	if reflect.TypeOf(rslt).Kind() != reflect.Ptr {
-		return comerr.TypeInvalid
+		return comerr.ErrTypeInvalid
 	}
 
 	db := this.ConnDB()
@@ -93,7 +93,7 @@ func (this *MgoWrapper) FindTopOne(col string, query interface{}, orderBy string
 
 func (this *MgoWrapper) FindAndSort(col string, query interface{}, orderBy string, skip, limit int, rslt interface{}) error {
 	if t := reflect.TypeOf(rslt); t.Kind() != reflect.Ptr || t.Elem().Kind() != reflect.Slice {
-		return comerr.TypeInvalid
+		return comerr.ErrTypeInvalid
 	}
 
 	db := this.ConnDB()

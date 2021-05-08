@@ -30,7 +30,7 @@ func NewAccessController(sess *mgo.Session) *AccessController {
 
 func (this *AccessController) FindRelationships(requestId string, bind int, state int, requestedIds ...string) ([]*MRelationship, error) {
 	if requestId == "" || bind > Bind_By_BlackList || state > Relation_Broke {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 
 	query := make(bson.M)
@@ -66,7 +66,7 @@ func (this *AccessController) FindRelationships(requestId string, bind int, stat
 
 func (this *AccessController) Follow(requestId, requestedId string) error {
 	if requestId == "" || requestedId == "" {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	if this.relationshipExists(requestId, requestedId, Bind_By_Followed, Relation_Established) {
@@ -85,7 +85,7 @@ func (this *AccessController) Follow(requestId, requestedId string) error {
 
 func (this *AccessController) WhiteListBindRequest(requestId, requestedId string) error {
 	if requestId == "" || requestedId == "" {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	query := bson.M{"$or": []bson.M{bson.M{"request_id": requestId, "requested_id": requestedId}, bson.M{"request_id": requestedId, "requested_id": requestId}}, "bind_by": Bind_By_WhiteList}
@@ -107,7 +107,7 @@ func (this *AccessController) WhiteListBindRequest(requestId, requestedId string
 
 func (this *AccessController) KickInBlackList(requestId, requestedId string) error {
 	if requestId == "" || requestedId == "" {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	if this.relationshipExists(requestId, requestedId, Bind_By_BlackList, Relation_Established) {
@@ -126,7 +126,7 @@ func (this *AccessController) KickInBlackList(requestId, requestedId string) err
 
 func (this *AccessController) UpdateRelationshipState(requestId, requestedId string, bind int, oldState, newState int) error {
 	if requestId == "" || requestedId == "" || bind < Bind_By_Followed || bind > Bind_By_BlackList {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	if !this.relationshipExists(requestId, requestedId, bind, oldState) {
@@ -164,7 +164,7 @@ func (this *AccessController) relationshipExists(requestId, requestedId string, 
 
 func (this *AccessController) EmpowerRequest(requestId, resourceId string, authCode string) error {
 	if requestId == "" || resourceId == "" || authCode == "" {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	if !this.accessControlExists(resourceId, Access_AuthCode, AccCtrl_Normal) {
@@ -192,7 +192,7 @@ func (this *AccessController) EmpowerRequest(requestId, resourceId string, authC
 
 func (this *AccessController) EmpowerRespond(requestId, resourceId string, state int) error {
 	if requestId == "" || resourceId == "" || state < AuthCode_Applied || state > AuthCode_Expired {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	return this.mgoWrapper.UpSetOne(col_auth_record, bson.M{"request_id": requestId, "resource_id": resourceId}, bson.M{"updated": time.Now().Unix(), "state": state})
@@ -220,7 +220,7 @@ func (this *AccessController) accessControlExists(resourceId string, accTag int,
 
 func (this *AccessController) CreateAccessControl(createrId string, accTag int, accParam string, resourceIds ...string) error {
 	if createrId == "" || len(resourceIds) == 0 || accTag < Access_Public || accTag > Access_Relationship || ((accTag == Access_Only || accTag == Access_Group) && accParam == "") {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	if accTag == Access_Group {
@@ -253,7 +253,7 @@ func (this *AccessController) CreateAccessControl(createrId string, accTag int, 
 
 func (this *AccessController) UpdateAccessControl(conCreaterId, conResourceId string, updAccTag int, updAccParam string) error {
 	if conCreaterId == "" || conResourceId == "" || updAccTag < Access_Public || updAccTag > Access_Relationship || ((updAccTag == Access_Only || updAccTag == Access_Group) && updAccParam == "") {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	if updAccTag == Access_Group {
@@ -269,7 +269,7 @@ func (this *AccessController) UpdateAccessControl(conCreaterId, conResourceId st
 
 func (this *AccessController) DeleteAccessControl(createrId, resourceId string, soft bool) error {
 	if createrId == "" || resourceId == "" {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	macc := &MAccessControl{}
@@ -291,7 +291,7 @@ func (this *AccessController) DeleteAccessControl(createrId, resourceId string, 
 
 func (this *AccessController) CreateGroup(createrId string, gtype int, name string, requestedIds ...string) (gid string, err error) {
 	if createrId == "" || name == "" || gtype < Group_Allow || gtype > Group_Deny {
-		return "", comerr.ParamInvalid
+		return "", comerr.ErrParamInvalid
 	}
 
 	var c int
@@ -325,7 +325,7 @@ func (this *AccessController) CreateGroup(createrId string, gtype int, name stri
 
 func (this *AccessController) AddIntoGroup(groupId string, requestId string, requestedIds ...string) error {
 	if groupId == "" || requestId == "" || len(requestedIds) == 0 {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	gid := bson.ObjectIdHex(groupId)
@@ -350,7 +350,7 @@ func (this *AccessController) AddIntoGroup(groupId string, requestId string, req
 
 func (this *AccessController) RemoveFromGroup(groupId string, requestedIds ...string) error {
 	if groupId == "" || len(requestedIds) == 0 {
-		return comerr.ParamInvalid
+		return comerr.ErrParamInvalid
 	}
 
 	gid := bson.ObjectIdHex(groupId)

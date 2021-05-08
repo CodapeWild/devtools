@@ -40,7 +40,7 @@ type FFInfo struct {
 
 func ParseFFInfoFromFile(filePath string) (*FFInfo, error) {
 	if !file.IsFileExists(filePath) {
-		return nil, comerr.ParamInvalid
+		return nil, comerr.ErrParamInvalid
 	}
 
 	ffinfo := &FFInfo{}
@@ -96,7 +96,7 @@ func (this *FFCmd) AddOutput(filePath string) *FFCmd {
 	this.output = filePath
 	this.oformat = path.Ext(filePath)[1:]
 	if this.oformat == "" {
-		this.err = comerr.ParamInvalid
+		this.err = comerr.ErrParamInvalid
 	}
 
 	return this

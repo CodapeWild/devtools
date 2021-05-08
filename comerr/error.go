@@ -31,9 +31,9 @@ func (this *ComErr) Show() {
 func ContextError(ctx context.Context) error {
 	switch ctx.Err() {
 	case context.Canceled:
-		return ProcessCanceled
+		return ErrProcessCanceled
 	case context.DeadlineExceeded:
-		return ProcessOvertime
+		return ErrProcessOvertime
 	default:
 		return nil
 	}
