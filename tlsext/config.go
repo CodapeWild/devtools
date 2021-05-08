@@ -8,18 +8,18 @@ import (
 	"strings"
 )
 
-// ClientConfig represents the standard client TLS config.
-type ClientConfig struct {
-	TlsCAs             []string `json:"tls_cas" toml:"tls_cas"`
-	TlsCert            string   `json:"tls_cert" toml:"tls_cert"`
-	TlsKey             string   `json:"tls_key" toml:"tls_key"`
+// TlsClientConfig represents the standard client TLS config.
+type TlsClientConfig struct {
+	CaCerts            []string `json:"ca_certs" toml:"ca_certs"`
+	Cert               string   `json:"cert" toml:"cert"`
+	CertKey            string   `json:"cert_key" toml:"cert_key"`
 	InsecureSkipVerify bool     `json:"insecure_skip_verify" toml:"insecure_skip_verify"`
 	ServerName         string   `json:"tls_server_name" toml:"tls_server_name"`
 }
 
 // TLSConfig returns a tls.Config, may be nil without error if TLS is not
 // configured.
-func (this *ClientConfig) TlsConfig() (*tls.Config, error) {
+func (this *TlsClientConfig) TlsConfig() (*tls.Config, error) {
 	// This check returns a nil (aka, "use the default")
 	// tls.Config if no field is set that would have an effect on
 	// a TLS connection. That is, any of:
@@ -27,7 +27,7 @@ func (this *ClientConfig) TlsConfig() (*tls.Config, error) {
 	//     * peer certificate authorities,
 	//     * disabled security, or
 	//     * an SNI server name.
-	if len(this.TlsCAs) == 0 && this.TlsKey == "" && this.TlsCert == "" && !this.InsecureSkipVerify && this.ServerName == "" {
+	if len(this.CaCerts) == 0 && this.CertKey == "" && this.Cert == "" && !this.InsecureSkipVerify && this.ServerName == "" {
 		return nil, nil
 	}
 
@@ -36,16 +36,16 @@ func (this *ClientConfig) TlsConfig() (*tls.Config, error) {
 		Renegotiation:      tls.RenegotiateNever,
 	}
 
-	if len(this.TlsCAs) != 0 {
-		if pool, err := MakeCertPool(this.TlsCAs); err != nil {
+	if len(this.CaCerts) != 0 {
+		if pool, err := MakeCertPool(this.CaCerts); err != nil {
 			return nil, err
 		} else {
 			tlsConfig.RootCAs = pool
 		}
 	}
 
-	if this.TlsCert != "" && this.TlsKey != "" {
-		if err := loadCertificate(tlsConfig, this.TlsCert, this.TlsKey); err != nil {
+	if this.Cert != "" && this.CertKey != "" {
+		if err := loadCertificate(tlsConfig, this.Cert, this.CertKey); err != nil {
 			return nil, err
 		}
 	}
@@ -59,25 +59,25 @@ func (this *ClientConfig) TlsConfig() (*tls.Config, error) {
 
 // ServerConfig represents the standard server TLS config.
 type ServerConfig struct {
-	TlsCert           string   `json:"tls_cert" toml:"tls_cert"`
-	TlsKey            string   `json:"tls_key" toml:"tls_key"`
-	TlsAllowedCACerts []string `json:"tls_allowed_ca_certs" toml:"tls_allowed_ca_certs"`
-	TlsCipherSuites   []string `json:"tls_cipher_suites" toml:"tls_cipher_suites"`
-	TlsMinVersion     string   `json:"tls_min_version" toml:"tls_min_version"`
-	TlsMaxVersion     string   `json:"tls_max_version" toml:"tls_max_version"`
+	Cert           string   `json:"cert" toml:"cert"`
+	CertKey        string   `json:"cert_key" toml:"cert_key"`
+	AllowedCaCerts []string `json:"allowed_ca_certs" toml:"allowed_ca_certs"`
+	CipherSuites   []string `json:"cipher_suites" toml:"cipher_suites"`
+	TlsMinVersion  string   `json:"tls_min_version" toml:"tls_min_version"`
+	TlsMaxVersion  string   `json:"tls_max_version" toml:"tls_max_version"`
 }
 
 // TLSConfig returns a tls.Config, may be nil without error if TLS is not
 // configured.
 func (this *ServerConfig) TlsConfig() (*tls.Config, error) {
-	if this.TlsCert == "" && this.TlsKey == "" && len(this.TlsAllowedCACerts) == 0 {
+	if this.Cert == "" && this.CertKey == "" && len(this.AllowedCaCerts) == 0 {
 		return nil, nil
 	}
 
 	tlsConfig := &tls.Config{}
 
-	if len(this.TlsAllowedCACerts) != 0 {
-		if pool, err := MakeCertPool(this.TlsAllowedCACerts); err != nil {
+	if len(this.AllowedCaCerts) != 0 {
+		if pool, err := MakeCertPool(this.AllowedCaCerts); err != nil {
 			return nil, err
 		} else {
 			tlsConfig.ClientCAs = pool
@@ -85,15 +85,15 @@ func (this *ServerConfig) TlsConfig() (*tls.Config, error) {
 		}
 	}
 
-	if this.TlsCert != "" && this.TlsKey != "" {
-		if err := loadCertificate(tlsConfig, this.TlsCert, this.TlsKey); err != nil {
+	if this.Cert != "" && this.CertKey != "" {
+		if err := loadCertificate(tlsConfig, this.Cert, this.CertKey); err != nil {
 			return nil, err
 		}
 	}
 
-	if len(this.TlsCipherSuites) != 0 {
-		if cipherSuites, err := ParseCiphers(this.TlsCipherSuites); err != nil {
-			return nil, fmt.Errorf("could not parse server cipher suites %s: %v", strings.Join(this.TlsCipherSuites, ","), err)
+	if len(this.CipherSuites) != 0 {
+		if cipherSuites, err := ParseCiphers(this.CipherSuites); err != nil {
+			return nil, fmt.Errorf("could not parse server cipher suites %s: %v", strings.Join(this.CipherSuites, ","), err)
 		} else {
 			tlsConfig.CipherSuites = cipherSuites
 		}
