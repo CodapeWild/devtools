@@ -138,22 +138,23 @@ func (this *MessageQueue) Send(msg Message) error {
 	if this.status == MsgQ_Close {
 		return ErrMsgQClosed
 	}
+	var err error
 	if this.status == MsgQ_Suspend {
-		if !this.cache.Push(msg) {
-			return ErrCachePushFailed
+		err = ErrMsgQSuspended
+		if this.cache == nil || !this.cache.Push(msg) {
+			err = ErrCachePushFailed
 		}
+
+		return err
 	}
 
-	var err error
 	select {
 	case this.msgChan <- msg: // message enqueue
 		return nil
 	case <-time.After(this.timeout): // message enqueue timeout, cache up if Cache exists
 		err = ErrMsgQEnqueOvertime
-		if this.cache != nil {
-			if !this.cache.Push(msg) {
-				err = ErrCachePushFailed
-			}
+		if this.cache == nil || !this.cache.Push(msg) {
+			err = ErrCachePushFailed
 		}
 	}
 
