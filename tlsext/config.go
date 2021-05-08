@@ -17,8 +17,7 @@ type TlsClientConfig struct {
 	ServerName         string   `json:"tls_server_name" toml:"tls_server_name"`
 }
 
-// TLSConfig returns a tls.Config, may be nil without error if TLS is not
-// configured.
+// TLSConfig returns a tls.Config, may be nil without error if TLS is not configured.
 func (this *TlsClientConfig) TlsConfig() (*tls.Config, error) {
 	// This check returns a nil (aka, "use the default")
 	// tls.Config if no field is set that would have an effect on
@@ -49,7 +48,6 @@ func (this *TlsClientConfig) TlsConfig() (*tls.Config, error) {
 			return nil, err
 		}
 	}
-
 	if this.ServerName != "" {
 		tlsConfig.ServerName = this.ServerName
 	}
@@ -63,8 +61,8 @@ type ServerConfig struct {
 	CertKey        string   `json:"cert_key" toml:"cert_key"`
 	AllowedCaCerts []string `json:"allowed_ca_certs" toml:"allowed_ca_certs"`
 	CipherSuites   []string `json:"cipher_suites" toml:"cipher_suites"`
-	TlsMinVersion  string   `json:"tls_min_version" toml:"tls_min_version"`
 	TlsMaxVersion  string   `json:"tls_max_version" toml:"tls_max_version"`
+	TlsMinVersion  string   `json:"tls_min_version" toml:"tls_min_version"`
 }
 
 // TLSConfig returns a tls.Config, may be nil without error if TLS is not

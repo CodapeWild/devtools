@@ -117,7 +117,7 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 				}
 			default:
 			}
-			// check timeout cache up
+			// check timeout cache up buffer
 			if this.cache != nil && this.cache.Len() != 0 {
 				go this.cleanCache()
 			}
@@ -161,25 +161,22 @@ func (this *MessageQueue) Send(msg Message) error {
 	return err
 }
 
+/*
+	Suspend() will return token if
+*/
 func (this *MessageQueue) Suspend() (string, bool) {
-	var (
-		token string
-		ok    bool
-	)
-	if this.crtl.token == "" {
-		this.crtl.Lock()
-		defer this.crtl.Unlock()
-
-		this.crtl.suspend <- struct{}{}
-		this.crtl.token = code.RandBase64(32)
-
-		token = this.crtl.token
-		ok = true
-
-		this.status = MsgQ_Suspend
+	if this.status == MsgQ_Suspend {
+		return "", false
 	}
 
-	return token, ok
+	this.crtl.Lock()
+	defer this.crtl.Unlock()
+
+	this.crtl.suspend <- struct{}{}
+	this.crtl.token = code.RandBase64(32)
+	this.status = MsgQ_Suspend
+
+	return this.crtl.token, true
 }
 
 func (this *MessageQueue) Resume(token string) bool {
