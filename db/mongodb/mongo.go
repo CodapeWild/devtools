@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"devtools/tlsext"
 	"net"
+	"time"
 
 	"gopkg.in/mgo.v2"
 )
@@ -54,6 +55,9 @@ func (this *MgoConfig) NewSession() (*mgo.Session, error) {
 			}
 		}
 	}
+
+	dialInfo.Direct = true
+	dialInfo.Timeout = 3 * time.Second
 
 	return mgo.DialWithInfo(dialInfo)
 }

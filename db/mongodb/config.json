@@ -1,7 +1,15 @@
 {
   "host": "127.0.0.1",
   "port": "27017",
-  "user": "mgoAdmin",
+  "user": "dbAdmin",
   "pswd": "123456",
-  "db": "admin"
+  "db": "user",
+  "enable_tls": false,
+  "tls_conf": {
+    "ca_certs": ["/path/to/ca"],
+    "cert": "/path/to/cert",
+    "cert_key": "/path/to/key",
+    "insecure_skip_verify": false,
+    "server_name": "mongodb"
+  }
 }
