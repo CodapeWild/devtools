@@ -1,15 +1,27 @@
 package mongodb
 
 import (
+	"crypto/tls"
+	"devtools/tlsext"
+	"net"
+	"time"
+
 	"gopkg.in/mgo.v2"
 )
 
+var (
+	defHost = "127.0.0.1"
+	defPort = "27017"
+)
+
 type MgoConfig struct {
-	Host string `json:"host"`
-	Port string `json:"port"`
-	User string `json:"user"`
-	Pswd string `json:"pswd"`
-	Db   string `json:"db"`
+	Host      string                  `json:"host"`
+	Port      string                  `json:"port"`
+	User      string                  `json:"user"`
+	Pswd      string                  `json:"pswd"`
+	Db        string                  `json:"db"`
+	EnableTls bool                    `json:"enable_tls"`
+	TlsConf   *tlsext.TlsClientConfig `json:"tls_conf"`
 }
 
 // mongodb://user:pswd@host:port/db
@@ -19,15 +31,33 @@ func (this *MgoConfig) NewSession() (*mgo.Session, error) {
 		connStr += this.User + ":" + this.Pswd + "@"
 	}
 	if this.Host == "" {
-		this.Host = "127.0.0.1"
+		this.Host = defHost
 	}
 	if this.Port == "" {
-		this.Port = "27017"
+		this.Port = defPort
 	}
 	connStr += this.Host + ":" + this.Port
 	if this.Db != "" {
 		connStr += "/" + this.Db
 	}
 
-	return mgo.Dial(connStr)
+	dialInfo, err := mgo.ParseURL(connStr)
+	if err != nil {
+		return nil, err
+	}
+
+	if this.EnableTls && this.TlsConf != nil {
+		if tlsConf, err := this.TlsConf.TlsConfig(); err != nil {
+			return nil, err
+		} else {
+			dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
+				return tls.Dial("tcp", addr.String(), tlsConf)
+			}
+		}
+	}
+
+	dialInfo.Direct = true
+	dialInfo.Timeout = 3 * time.Second
+
+	return mgo.DialWithInfo(dialInfo)
 }
