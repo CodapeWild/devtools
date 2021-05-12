@@ -7,14 +7,14 @@ import (
 )
 
 type RedisConfig struct {
-	Host            string `json:"host"`
-	Port            string `json:"port"`
-	Pswd            string `json:"pswd"`
-	MaxIdle         int    `json:"max_idl"`
-	MaxActive       int    `json:"max_active"`
-	DialTimeoutSec  int    `json:"dial_timeout_sec"`
-	ReadTimeoutSec  int    `json:"read_timeout_sec"`
-	WriteTimeoutSec int    `json:"write_timeout_sec"`
+	Host            string `json:"host" toml:"host"`
+	Port            string `json:"port" toml:"port"`
+	Pswd            string `json:"pswd" toml:"pswd"`
+	MaxIdle         int    `json:"max_idl" toml:"max_idl"`
+	MaxActive       int    `json:"max_active" toml:"max_active"`
+	DialTimeoutSec  int    `json:"dial_timeout_sec" toml:"dial_timeout_sec"`
+	ReadTimeoutSec  int    `json:"read_timeout_sec" toml:"read_timeout_sec"`
+	WriteTimeoutSec int    `json:"write_timeout_sec" toml:"write_timeout_sec"`
 }
 
 func (this *RedisConfig) NewPool() (*redis.Pool, error) {

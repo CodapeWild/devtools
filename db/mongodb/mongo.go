@@ -15,13 +15,13 @@ var (
 )
 
 type MgoConfig struct {
-	Host      string                  `json:"host"`
-	Port      string                  `json:"port"`
-	User      string                  `json:"user"`
-	Pswd      string                  `json:"pswd"`
-	Db        string                  `json:"db"`
-	EnableTls bool                    `json:"enable_tls"`
-	TlsConf   *tlsext.TlsClientConfig `json:"tls_conf"`
+	Host      string                  `json:"host" toml:"host"`
+	Port      string                  `json:"port" toml:"port"`
+	User      string                  `json:"user" toml:"user"`
+	Pswd      string                  `json:"pswd" toml:"pswd"`
+	Db        string                  `json:"db" toml:"db"`
+	EnableTls bool                    `json:"enable_tls" toml:"enable_tls"`
+	TlsConf   *tlsext.TlsClientConfig `json:"tls_conf" toml:"tls_conf"`
 }
 
 // mongodb://user:pswd@host:port/db

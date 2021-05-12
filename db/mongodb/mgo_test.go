@@ -32,7 +32,7 @@ func TestMgoDb(t *testing.T) {
 		log.Fatalln(err.Error())
 	}
 
-	dbFoo := NewWrapper("foo", sess)
+	dbFoo := NewWrapper(sess, "foo")
 
 	if err = dbFoo.Insert("user", bson.M{"name": "tnt", "age": 123}); err != nil {
 		log.Fatalln(err.Error())
@@ -40,11 +40,11 @@ func TestMgoDb(t *testing.T) {
 	if err = dbFoo.Insert("user", &muser{bson.NewObjectId(), "tf", 225, "1/2"}); err != nil {
 		log.Fatalln(err.Error())
 	}
-	if err = dbFoo.UpdateOne("user", bson.M{"_id": bson.ObjectIdHex("5d05e11afacac534bf1f1bc3")}, bson.M{"$set": bson.M{"age": 333, "sex": 1}}); err != nil {
+	if err = dbFoo.UpdateOne("user", bson.M{"name": "tnt"}, bson.M{"$set": bson.M{"age": 333, "sex": 1}}); err != nil {
 		log.Fatalln(err.Error())
 	}
 	u := &muser{}
-	if err = dbFoo.FindOne("user", bson.M{"_id": bson.ObjectIdHex("5d05e6020f319256050e4469")}, u); err != nil {
+	if err = dbFoo.FindOne("user", bson.M{"name": "tnt"}, u); err != nil {
 		log.Println(err.Error())
 	}
 	log.Println(*u)
