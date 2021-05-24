@@ -2,6 +2,7 @@ package comerr
 
 import "errors"
 
+// code related
 var (
 	ErrNilPointer           = errors.New("nil pointer")
 	ErrParamInvalid         = errors.New("invalid parameter")
@@ -16,4 +17,10 @@ var (
 	ErrProcessFailed        = errors.New("process failed")
 	ErrUnrecognizedProtocol = errors.New("unrecognized protocol")
 	ErrNotFound             = errors.New("not found")
+)
+
+// file related
+var (
+	ErrFileNotExists = errors.New("file does not exist")
+	ErrDirNotExists  = errors.New("directory does not exist")
 )
