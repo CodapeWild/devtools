@@ -12,7 +12,7 @@ import (
 
 func ReadJsonFile(filePath string, out interface{}) error {
 	if !IsFileExists(filePath) {
-		return FileNotExists
+		return comerr.ErrFileNotExists
 	}
 	if out == nil {
 		return comerr.ErrParamInvalid

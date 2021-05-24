@@ -21,6 +21,7 @@ var (
 
 // file related
 var (
-	ErrFileNotExists = errors.New("file does not exist")
-	ErrDirNotExists  = errors.New("directory does not exist")
+	ErrFileNotExists     = errors.New("file does not exist")
+	ErrDirNotExists      = errors.New("directory does not exist")
+	ErrPathAlreadyExists = errors.New("provided path already exists")
 )

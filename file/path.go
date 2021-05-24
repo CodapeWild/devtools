@@ -1,35 +1,50 @@
 package file
 
 import (
-	"errors"
+	"devtools/comerr"
 	"os"
 	"path"
 )
 
-var (
-	DirNotExists   = errors.New("directory not exists")
-	FileNotExists  = errors.New("file not exists")
-	OpenFileFailed = errors.New("unable to open file")
-)
-
 func IsFileExists(filePath string) bool {
-	finfo, err := os.Stat(filePath)
-
-	return err == nil && !finfo.IsDir()
-}
-
-func IsDirExists(dir string) bool {
-	finfo, err := os.Stat(dir)
-
-	return err == nil && finfo.IsDir()
-}
-
-func CreateAnyway(filePath string, perm os.FileMode) (*os.File, error) {
-	if dir := path.Dir(filePath); !IsDirExists(dir) {
-		if err := os.MkdirAll(dir, perm); err != nil {
-			return nil, err
+	if finfo, err := os.Stat(filePath); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	} else {
+		if md := finfo.Mode(); !md.IsRegular() {
+			return false
 		}
 	}
 
-	return os.Create(filePath)
+	return true
+}
+
+func IsDirExists(dir string) bool {
+	if finfo, err := os.Stat(dir); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	} else {
+		if md := finfo.Mode(); !md.IsDir() {
+			return false
+		}
+	}
+
+	return true
+}
+
+func CreateFileAnyway(filePath string, perm os.FileMode) (*os.File, error) {
+	_, err := os.Stat(filePath)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return nil, comerr.ErrPathAlreadyExists
+		}
+	}
+
+	if err = os.MkdirAll(path.Dir(filePath), perm); err != nil {
+		return nil, err
+	} else {
+		return os.OpenFile(filePath, os.O_CREATE, perm)
+	}
 }
