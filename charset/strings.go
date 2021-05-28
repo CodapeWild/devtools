@@ -1,4 +1,4 @@
-package article
+package charset
 
 import (
 	"bytes"
@@ -96,23 +96,6 @@ func RepeatedLNSub(s string, count int) string {
 	return ""
 }
 
-func Distinct(input []string) []string {
-	output := make([]string, len(input))
-	j := 0
-	for i := 0; i < len(input); i++ {
-		for _, v := range output {
-			if v == input[i] {
-				goto NEXT
-			}
-		}
-		output[j] = input[i]
-		j++
-	NEXT:
-	}
-
-	return output[:j]
-}
-
 func CommonPrefix(s1, s2 string) string {
 	var i = 0
 	for ; i < len(s1) && i < len(s2) && s1[i] == s2[i]; i++ {
@@ -135,17 +118,4 @@ func FindUInt(s string) (num uint, end int, err error) {
 	}
 
 	return num, 0, comerr.ErrNotFound
-}
-
-func Merge(ss []string, sep string) string {
-	if len(ss) == 0 {
-		return ""
-	}
-
-	s := ss[0]
-	for _, v := range ss[1:] {
-		s += sep + v
-	}
-
-	return s
 }
