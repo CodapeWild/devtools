@@ -28,6 +28,12 @@ NEXT:
 }
 
 func Intersect(set1, set2 []string) []string {
+	if len(set1) == 0 {
+		return set2
+	} else if len(set2) == 0 {
+		return set1
+	}
+
 	m := make(map[string]int)
 	for _, v := range set1 {
 		m[v] = 0

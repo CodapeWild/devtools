@@ -1,7 +1,7 @@
 package algorithm
 
 import (
-	"devtools/article"
+	"devtools/charset"
 	"devtools/comerr"
 	"encoding/json"
 	"io"
@@ -37,7 +37,7 @@ func (this TrieString) IsPrefixOf(other TrieWord) bool {
 }
 
 func (this TrieString) SplitCommonPrefix(other TrieWord) (commonPrefix, left TrieWord) {
-	commonPrefix = TrieString(article.CommonPrefix(this.String(), other.String()))
+	commonPrefix = TrieString(charset.CommonPrefix(this.String(), other.String()))
 	left = TrieString(strings.TrimPrefix(this.String(), commonPrefix.String()))
 
 	return
