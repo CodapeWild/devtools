@@ -1,0 +1,576 @@
+
+state 0
+	$accept: .line $end 
+
+	SEMICOLON  shift 4
+	LEFT_CURLY_BRACKET  shift 7
+	COMMA  shift 9
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr  goto 2
+	expr1  goto 3
+	expr2  goto 5
+	expr3  goto 6
+	expr4  goto 8
+	expr5  goto 10
+	expr6  goto 11
+	expr7  goto 12
+	line  goto 1
+
+state 1
+	$accept:  line.$end 
+
+	$end  accept
+	.  error
+
+
+state 2
+	line:  expr.    (1)
+
+	.  reduce 1 (src line 26)
+
+
+state 3
+	expr:  expr1.    (2)
+	expr1:  expr1.SEMICOLON expr2 
+
+	SEMICOLON  shift 16
+	.  reduce 2 (src line 40)
+
+
+state 4
+	expr:  SEMICOLON.expr 
+
+	SEMICOLON  shift 4
+	LEFT_CURLY_BRACKET  shift 7
+	COMMA  shift 9
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr  goto 17
+	expr1  goto 3
+	expr2  goto 5
+	expr3  goto 6
+	expr4  goto 8
+	expr5  goto 10
+	expr6  goto 11
+	expr7  goto 12
+
+state 5
+	expr1:  expr2.    (4)
+
+	.  reduce 4 (src line 47)
+
+
+state 6
+	expr2:  expr3.    (6)
+
+	.  reduce 6 (src line 54)
+
+
+state 7
+	expr2:  LEFT_CURLY_BRACKET.expr2 RIGHT_CULY_BRACKET 
+
+	LEFT_CURLY_BRACKET  shift 7
+	COMMA  shift 9
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr2  goto 18
+	expr3  goto 6
+	expr4  goto 8
+	expr5  goto 10
+	expr6  goto 11
+	expr7  goto 12
+
+state 8
+	expr3:  expr4.    (8)
+	expr4:  expr4.COMMA expr5 
+
+	COMMA  shift 19
+	.  reduce 8 (src line 61)
+
+
+state 9
+	expr3:  COMMA.expr3 
+
+	COMMA  shift 9
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr3  goto 20
+	expr4  goto 8
+	expr5  goto 10
+	expr6  goto 11
+	expr7  goto 12
+
+state 10
+	expr4:  expr5.    (10)
+	expr5:  expr5.AND expr6 
+	expr5:  expr5.OR expr6 
+
+	AND  shift 21
+	OR  shift 22
+	.  reduce 10 (src line 68)
+
+
+state 11
+	expr5:  expr6.    (12)
+	expr6:  expr6.GREAT expr7 
+	expr6:  expr6.LITTLE expr7 
+	expr6:  expr6.GREAT_EQUAL expr7 
+	expr6:  expr6.LITTLE_EQUAL expr7 
+	expr6:  expr6.EQUAL expr7 
+	expr6:  expr6.NOT_EQUAL expr7 
+	expr6:  expr6.IN LEFT_BRACE params RIGHT_BRACE 
+	expr6:  expr6.NOT_IN LEFT_BRACE params RIGHT_BRACE 
+
+	GREAT  shift 23
+	LITTLE  shift 24
+	GREAT_EQUAL  shift 25
+	LITTLE_EQUAL  shift 26
+	EQUAL  shift 27
+	NOT_EQUAL  shift 28
+	IN  shift 29
+	NOT_IN  shift 30
+	.  reduce 12 (src line 75)
+
+
+state 12
+	expr6:  expr7.    (15)
+
+	.  reduce 15 (src line 86)
+
+
+state 13
+	expr6:  MATCH.LEFT_BRACE expr6 COMMA expr7 RIGHT_BRACE 
+
+	LEFT_BRACE  shift 31
+	.  error
+
+
+state 14
+	expr7:  COMPARABLE.    (28)
+
+	.  reduce 28 (src line 141)
+
+
+state 15
+	expr7:  LEFT_BRACE.expr3 RIGHT_BRACE 
+
+	COMMA  shift 9
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr3  goto 32
+	expr4  goto 8
+	expr5  goto 10
+	expr6  goto 11
+	expr7  goto 12
+
+state 16
+	expr1:  expr1 SEMICOLON.expr2 
+
+	LEFT_CURLY_BRACKET  shift 7
+	COMMA  shift 9
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr2  goto 33
+	expr3  goto 6
+	expr4  goto 8
+	expr5  goto 10
+	expr6  goto 11
+	expr7  goto 12
+
+state 17
+	expr:  SEMICOLON expr.    (3)
+
+	.  reduce 3 (src line 41)
+
+
+state 18
+	expr2:  LEFT_CURLY_BRACKET expr2.RIGHT_CULY_BRACKET 
+
+	RIGHT_CULY_BRACKET  shift 34
+	.  error
+
+
+state 19
+	expr4:  expr4 COMMA.expr5 
+
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr5  goto 35
+	expr6  goto 11
+	expr7  goto 12
+
+state 20
+	expr3:  COMMA expr3.    (9)
+
+	.  reduce 9 (src line 62)
+
+
+state 21
+	expr5:  expr5 AND.expr6 
+
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr6  goto 36
+	expr7  goto 12
+
+state 22
+	expr5:  expr5 OR.expr6 
+
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr6  goto 37
+	expr7  goto 12
+
+state 23
+	expr6:  expr6 GREAT.expr7 
+
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr7  goto 38
+
+state 24
+	expr6:  expr6 LITTLE.expr7 
+
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr7  goto 39
+
+state 25
+	expr6:  expr6 GREAT_EQUAL.expr7 
+
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr7  goto 40
+
+state 26
+	expr6:  expr6 LITTLE_EQUAL.expr7 
+
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr7  goto 41
+
+state 27
+	expr6:  expr6 EQUAL.expr7 
+
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr7  goto 42
+
+state 28
+	expr6:  expr6 NOT_EQUAL.expr7 
+
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr7  goto 43
+
+state 29
+	expr6:  expr6 IN.LEFT_BRACE params RIGHT_BRACE 
+
+	LEFT_BRACE  shift 44
+	.  error
+
+
+state 30
+	expr6:  expr6 NOT_IN.LEFT_BRACE params RIGHT_BRACE 
+
+	LEFT_BRACE  shift 45
+	.  error
+
+
+state 31
+	expr6:  MATCH LEFT_BRACE.expr6 COMMA expr7 RIGHT_BRACE 
+
+	MATCH  shift 13
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr6  goto 46
+	expr7  goto 12
+
+state 32
+	expr7:  LEFT_BRACE expr3.RIGHT_BRACE 
+
+	RIGHT_BRACE  shift 47
+	.  error
+
+
+state 33
+	expr1:  expr1 SEMICOLON expr2.    (5)
+
+	.  reduce 5 (src line 48)
+
+
+state 34
+	expr2:  LEFT_CURLY_BRACKET expr2 RIGHT_CULY_BRACKET.    (7)
+
+	.  reduce 7 (src line 55)
+
+
+state 35
+	expr4:  expr4 COMMA expr5.    (11)
+	expr5:  expr5.AND expr6 
+	expr5:  expr5.OR expr6 
+
+	AND  shift 21
+	OR  shift 22
+	.  reduce 11 (src line 69)
+
+
+state 36
+	expr5:  expr5 AND expr6.    (13)
+	expr6:  expr6.GREAT expr7 
+	expr6:  expr6.LITTLE expr7 
+	expr6:  expr6.GREAT_EQUAL expr7 
+	expr6:  expr6.LITTLE_EQUAL expr7 
+	expr6:  expr6.EQUAL expr7 
+	expr6:  expr6.NOT_EQUAL expr7 
+	expr6:  expr6.IN LEFT_BRACE params RIGHT_BRACE 
+	expr6:  expr6.NOT_IN LEFT_BRACE params RIGHT_BRACE 
+
+	GREAT  shift 23
+	LITTLE  shift 24
+	GREAT_EQUAL  shift 25
+	LITTLE_EQUAL  shift 26
+	EQUAL  shift 27
+	NOT_EQUAL  shift 28
+	IN  shift 29
+	NOT_IN  shift 30
+	.  reduce 13 (src line 76)
+
+
+state 37
+	expr5:  expr5 OR expr6.    (14)
+	expr6:  expr6.GREAT expr7 
+	expr6:  expr6.LITTLE expr7 
+	expr6:  expr6.GREAT_EQUAL expr7 
+	expr6:  expr6.LITTLE_EQUAL expr7 
+	expr6:  expr6.EQUAL expr7 
+	expr6:  expr6.NOT_EQUAL expr7 
+	expr6:  expr6.IN LEFT_BRACE params RIGHT_BRACE 
+	expr6:  expr6.NOT_IN LEFT_BRACE params RIGHT_BRACE 
+
+	GREAT  shift 23
+	LITTLE  shift 24
+	GREAT_EQUAL  shift 25
+	LITTLE_EQUAL  shift 26
+	EQUAL  shift 27
+	NOT_EQUAL  shift 28
+	IN  shift 29
+	NOT_IN  shift 30
+	.  reduce 14 (src line 80)
+
+
+state 38
+	expr6:  expr6 GREAT expr7.    (16)
+
+	.  reduce 16 (src line 87)
+
+
+state 39
+	expr6:  expr6 LITTLE expr7.    (17)
+
+	.  reduce 17 (src line 91)
+
+
+state 40
+	expr6:  expr6 GREAT_EQUAL expr7.    (18)
+
+	.  reduce 18 (src line 95)
+
+
+state 41
+	expr6:  expr6 LITTLE_EQUAL expr7.    (19)
+
+	.  reduce 19 (src line 99)
+
+
+state 42
+	expr6:  expr6 EQUAL expr7.    (20)
+
+	.  reduce 20 (src line 103)
+
+
+state 43
+	expr6:  expr6 NOT_EQUAL expr7.    (21)
+
+	.  reduce 21 (src line 107)
+
+
+state 44
+	expr6:  expr6 IN LEFT_BRACE.params RIGHT_BRACE 
+
+	COMPARABLE  shift 50
+	.  error
+
+	params  goto 48
+	param  goto 49
+
+state 45
+	expr6:  expr6 NOT_IN LEFT_BRACE.params RIGHT_BRACE 
+
+	COMPARABLE  shift 50
+	.  error
+
+	params  goto 51
+	param  goto 49
+
+state 46
+	expr6:  expr6.GREAT expr7 
+	expr6:  expr6.LITTLE expr7 
+	expr6:  expr6.GREAT_EQUAL expr7 
+	expr6:  expr6.LITTLE_EQUAL expr7 
+	expr6:  expr6.EQUAL expr7 
+	expr6:  expr6.NOT_EQUAL expr7 
+	expr6:  expr6.IN LEFT_BRACE params RIGHT_BRACE 
+	expr6:  expr6.NOT_IN LEFT_BRACE params RIGHT_BRACE 
+	expr6:  MATCH LEFT_BRACE expr6.COMMA expr7 RIGHT_BRACE 
+
+	COMMA  shift 52
+	GREAT  shift 23
+	LITTLE  shift 24
+	GREAT_EQUAL  shift 25
+	LITTLE_EQUAL  shift 26
+	EQUAL  shift 27
+	NOT_EQUAL  shift 28
+	IN  shift 29
+	NOT_IN  shift 30
+	.  error
+
+
+state 47
+	expr7:  LEFT_BRACE expr3 RIGHT_BRACE.    (29)
+
+	.  reduce 29 (src line 142)
+
+
+state 48
+	expr6:  expr6 IN LEFT_BRACE params.RIGHT_BRACE 
+	params:  params.COMMA param 
+
+	COMMA  shift 54
+	RIGHT_BRACE  shift 53
+	.  error
+
+
+state 49
+	params:  param.    (25)
+
+	.  reduce 25 (src line 125)
+
+
+state 50
+	param:  COMPARABLE.    (27)
+
+	.  reduce 27 (src line 135)
+
+
+state 51
+	expr6:  expr6 NOT_IN LEFT_BRACE params.RIGHT_BRACE 
+	params:  params.COMMA param 
+
+	COMMA  shift 54
+	RIGHT_BRACE  shift 55
+	.  error
+
+
+state 52
+	expr6:  MATCH LEFT_BRACE expr6 COMMA.expr7 RIGHT_BRACE 
+
+	LEFT_BRACE  shift 15
+	COMPARABLE  shift 14
+	.  error
+
+	expr7  goto 56
+
+state 53
+	expr6:  expr6 IN LEFT_BRACE params RIGHT_BRACE.    (22)
+
+	.  reduce 22 (src line 111)
+
+
+state 54
+	params:  params COMMA.param 
+
+	COMPARABLE  shift 50
+	.  error
+
+	param  goto 57
+
+state 55
+	expr6:  expr6 NOT_IN LEFT_BRACE params RIGHT_BRACE.    (23)
+
+	.  reduce 23 (src line 115)
+
+
+state 56
+	expr6:  MATCH LEFT_BRACE expr6 COMMA expr7.RIGHT_BRACE 
+
+	RIGHT_BRACE  shift 58
+	.  error
+
+
+state 57
+	params:  params COMMA param.    (26)
+
+	.  reduce 26 (src line 129)
+
+
+state 58
+	expr6:  MATCH LEFT_BRACE expr6 COMMA expr7 RIGHT_BRACE.    (24)
+
+	.  reduce 24 (src line 119)
+
+
+21 terminals, 12 nonterminals
+30 grammar rules, 59/8000 states
+0 shift/reduce, 0 reduce/reduce conflicts reported
+61 working sets used
+memory: parser 59/120000
+46 extra closures
+108 shift entries, 1 exceptions
+29 goto entries
+31 entries saved by goto default
+Optimizer space used: output 92/120000
+92 table entries, 11 zero
+maximum spread: 21, maximum offset: 54

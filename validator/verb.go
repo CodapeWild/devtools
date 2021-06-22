@@ -1,7 +1,7 @@
 package validator
 
 import (
-	"devtools/article"
+	"devtools/charset"
 	"regexp"
 	"strings"
 )
@@ -63,7 +63,7 @@ func hasSameNChar(pswd string, n int) bool {
 
 func hasRepeatedLNSub(pswd string) bool {
 	for i := 2; i <= len(pswd)/2; i++ {
-		if article.RepeatedLNSub(pswd, i) != "" {
+		if charset.RepeatedLNSub(pswd, i) != "" {
 			return true
 		}
 	}
