@@ -5,11 +5,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"log"
+	"regexp"
 	"strconv"
 )
 
 var (
 	ErrUnrecognizedOperator = errors.New("unrecognized operator")
+	ErrCompareIncomplete    = errors.New("relational expression not calculated")
 )
 
 var (
@@ -77,6 +79,16 @@ func (lopr Comparable) int() (int64, error) {
 	return strconv.ParseInt(lopr.string(), 10, 64)
 }
 
+func (lopr Comparable) boolean() (bool, error) {
+	if lopr == Comp_True {
+		return true, nil
+	} else if lopr == Comp_False {
+		return false, nil
+	} else {
+		return false, ErrCompareIncomplete
+	}
+}
+
 // !!!important calling this function only after finish the whole expression calculation
 func ResetCompRsltString() {
 	buf := make([]byte, 30)
@@ -84,6 +96,12 @@ func ResetCompRsltString() {
 	Comp_True = Comparable(base64.StdEncoding.EncodeToString(buf))
 	rand.Read(buf)
 	Comp_False = Comparable(base64.StdEncoding.EncodeToString(buf))
+}
+
+func Match(target, reg string) Comparable {
+	re := regexp.MustCompile(reg)
+
+	return convert(re.MatchString(target))
 }
 
 func convert(b bool) Comparable {
