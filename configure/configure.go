@@ -41,13 +41,6 @@ func (this *JsonFileConfigure) WriteTo(w io.Writer) error {
 }
 
 func (this *JsonFileConfigure) Marshal(v interface{}) ([]byte, error) {
-	if v == nil {
-		return nil, comerr.ErrNilPointer
-	}
-	if rf := reflect.TypeOf(v); rf.Kind() != reflect.Ptr || rf.Elem().Kind() != reflect.Map {
-		return nil, comerr.ErrTypeInvalid
-	}
-
 	var err error
 	this.buf, err = json.Marshal(v)
 
@@ -55,10 +48,7 @@ func (this *JsonFileConfigure) Marshal(v interface{}) ([]byte, error) {
 }
 
 func (this *JsonFileConfigure) Unmarshal(v interface{}) error {
-	if v == nil {
-		return comerr.ErrNilPointer
-	}
-	if rf := reflect.TypeOf(v); rf.Kind() != reflect.Ptr || rf.Elem().Kind() != reflect.Map {
+	if rv := reflect.ValueOf(v); rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return comerr.ErrTypeInvalid
 	}
 	if !json.Valid(this.buf) {
