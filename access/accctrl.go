@@ -25,7 +25,7 @@ type AccessController struct {
 }
 
 func NewAccessController(sess *mgo.Session) *AccessController {
-	return &AccessController{mgoWrapper: mongodb.NewWrapper(db_access, sess)}
+	return &AccessController{mgoWrapper: mongodb.NewWrapper(sess, db_access)}
 }
 
 func (this *AccessController) FindRelationships(requestId string, bind int, state int, requestedIds ...string) ([]*MRelationship, error) {
