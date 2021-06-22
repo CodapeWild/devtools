@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"devtools/comerr"
 	"devtools/file"
+	"encoding/json"
 	"io/ioutil"
 	"os/exec"
+	"reflect"
 	"time"
 )
 
@@ -44,7 +46,7 @@ func (this *Command) CombineOutErr() *Command {
 	return this
 }
 
-func (this *Command) RunWithTimeout(timeout time.Duration, formaters ...OutputFormater) ([]byte, error) {
+func (this *Command) RunWithTimeout(timeout time.Duration) ([]byte, error) {
 	err := this.Start()
 	if err != nil {
 		return nil, err
@@ -65,11 +67,23 @@ func (this *Command) RunWithTimeout(timeout time.Duration, formaters ...OutputFo
 		return nil, err
 	}
 
-	for _, f := range formaters {
-		if output, err = f(output); err != nil {
-			return nil, err
-		}
+	return output, cmderr
+}
+
+func (this *Command) RunWithJsonOut(out interface{}) error {
+	if rv := reflect.ValueOf(out); rv.Kind() != reflect.Ptr || rv.IsNil() {
+		return comerr.ErrTypeInvalid
 	}
 
-	return output, cmderr
+	err := this.Run()
+	if err != nil {
+		return err
+	}
+
+	var output []byte
+	if output, err = ioutil.ReadAll(this.buf); err != nil {
+		return err
+	}
+
+	return json.Unmarshal(output, out)
 }

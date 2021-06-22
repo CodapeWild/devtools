@@ -43,11 +43,11 @@ func ParseFFInfoFromFile(filePath string) (*FFInfo, error) {
 		return nil, comerr.ErrParamInvalid
 	}
 
-	ffinfo := &FFInfo{}
 	cmdstr := "ffprobe -v quiet -print_format json -show_format -show_streams " + filePath
 	cmdary := strings.Split(cmdstr, " ")
 	cmd := &(command.Command{Cmd: exec.Command(cmdary[0], cmdary[1:]...)})
-	if err := cmd.StdoutJson(ffinfo); err != nil {
+	ffinfo := &FFInfo{}
+	if err := cmd.RunWithJsonOut(ffinfo); err != nil {
 		return nil, err
 	} else {
 		if i := strings.Index(ffinfo.Format.Duration, "."); i > 0 {
