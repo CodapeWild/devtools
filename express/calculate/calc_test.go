@@ -5,8 +5,12 @@ import (
 	"testing"
 )
 
+var (
+	line1 = []byte("1+2+3")
+)
+
 func TestNext(t *testing.T) {
-	lex := &calcLex{line: []byte("1+2+3")}
+	lex := newCalcLex(line1)
 	tag, data := lex.next()
 	for tag != tag_eof {
 		log.Println(data)
