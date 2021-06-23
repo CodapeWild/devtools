@@ -57,15 +57,13 @@ func FoldByMax(src string, maxLineChars int) string {
 }
 
 func GoTemplateReplace(tmpl string, param interface{}) (string, error) {
-	if param == nil {
-		return "", comerr.ErrParamInvalid
-	} else {
-		t := reflect.TypeOf(param)
-		k := t.Kind()
-		if k == reflect.Ptr {
-			k = t.Elem().Kind()
+	if rv := reflect.ValueOf(param); rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return "", comerr.ErrParamInvalid
+		} else {
+			rv = rv.Elem()
 		}
-		if k != reflect.Struct && k != reflect.Map {
+		if rv.Kind() != reflect.Struct && rv.Kind() != reflect.Map {
 			return "", comerr.ErrParamInvalid
 		}
 	}
