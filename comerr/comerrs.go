@@ -16,6 +16,8 @@ var (
 	ErrProcessOvertime      = errors.New("process overtime")
 	ErrProcessFailed        = errors.New("process failed")
 	ErrUnrecognizedProtocol = errors.New("unrecognized protocol")
+	ErrEncodeInvalid        = errors.New("invalid encoding")
+	ErrDecodeFailed         = errors.New("decode failed")
 	ErrNotFound             = errors.New("not found")
 )
 
