@@ -116,6 +116,8 @@ func TestTrie(t *testing.T) {
 		trie.Add(v)
 	}
 
+	trie.Add("12")
+
 	for _, v := range cases {
 		log.Println(trie.Find(v))
 	}
