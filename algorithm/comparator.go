@@ -39,3 +39,25 @@ type ByteComp func(lopr, ropr byte) int
 func (this ByteComp) Compare(lopr, ropr interface{}) int {
 	return this(lopr.(byte), ropr.(byte))
 }
+
+type CompareFunc func(comparator Comparator) func(lopr, ropr interface{}) bool
+
+func Bigger(comparator Comparator) func(lopr, ropr interface{}) bool {
+	return func(lopr, ropr interface{}) bool {
+		if comparator.Compare(lopr, ropr) >= 0 {
+			return true
+		} else {
+			return false
+		}
+	}
+}
+
+func Smaller(comparator Comparator) func(lopr, ropr interface{}) bool {
+	return func(lopr, ropr interface{}) bool {
+		if comparator.Compare(lopr, ropr) <= 0 {
+			return true
+		} else {
+			return false
+		}
+	}
+}

@@ -3,11 +3,13 @@ package algorithm
 type Heap struct {
 	data       []interface{}
 	comparator Comparator
+	compare    CompareFunc
 }
 
-func NewHeap(comparator Comparator, data ...interface{}) *Heap {
+func NewHeap(comparator Comparator, compare CompareFunc, data ...interface{}) *Heap {
 	heap := &Heap{
-		comparator: comparator,
+		comparator: CompareByte,
+		compare:    compare,
 	}
 	heap.Insert(data...)
 
@@ -57,16 +59,55 @@ func (this *Heap) Remove() interface{} {
 	return tmp
 }
 
+func (this *Heap) parent(child int) int {
+	return (child - 1) / 2
+}
+
+func (this *Heap) lchild(parent int) int {
+	return parent*2 + 1
+}
+
+func (this *Heap) rchild(parent int) int {
+	return parent*2 + 2
+}
+
 func (this *Heap) heapifyUp() {
 	var (
 		child  = this.Count() - 1
-		parent = child / 2
+		parent = this.parent(child)
 	)
 	for parent > 0 {
-		if this.comparator.Compare(this.data[child])
+		if this.compare(this.comparator)(this.data[child], this.data[parent]) {
+			this.data[child], this.data[parent] = this.data[parent], this.data[child]
+			child = parent
+			parent = this.parent(child)
+		} else {
+			break
+		}
 	}
 }
 
 func (this *Heap) heapifyDown() {
-
+	var (
+		parent = 0
+		lchild = this.lchild(parent)
+		rchild = this.rchild(parent)
+	)
+	for {
+		tmp := parent
+		if lchild <= this.Count()-1 && this.compare(this.comparator)(this.data[parent], this.data[lchild]) {
+			tmp = lchild
+		}
+		if rchild <= this.Count()-1 && this.compare(this.comparator)(this.data[parent], this.data[rchild]) {
+			tmp = rchild
+		}
+		if tmp != parent {
+			this.data[parent], this.data[tmp] = this.data[tmp], this.data[parent]
+			parent = tmp
+			lchild = this.lchild(parent)
+			rchild = this.rchild(parent)
+		} else {
+			break
+		}
+	}
 }
