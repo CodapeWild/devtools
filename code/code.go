@@ -18,15 +18,48 @@ func RandBase64(bufSize int) string {
 	return base64.StdEncoding.EncodeToString(buf)
 }
 
-// return a string of random number of length l
-func RandNum(l int) string {
+// return a random number of length l
+func RandNumInt64(l uint, neg bool) int64 {
+	if l == 0 {
+		return 0
+	}
+
+	var num float64 = float64(rand.Intn(9)+1) + rand.Float64()
+	var i uint
+	for i = 1; i < l; i++ {
+		num *= 10
+	}
+	if neg {
+		num = -num
+	}
+
+	return int64(num)
+}
+
+// return a random string of number of length l
+func RandNumString(l uint, neg bool) string {
+	if l == 0 {
+		return ""
+	}
+
 	rand.Seed(time.Now().UnixNano())
-	buf := make([]byte, l)
-	for i := 0; i < l; i++ {
+
+	var (
+		buf []byte
+		i   uint
+	)
+	buf = make([]byte, l)
+	buf[i] = '1' + byte(rand.Intn(9))
+	i++
+	for ; i < l; i++ {
 		buf[i] = '0' + byte(rand.Intn(10))
 	}
 
-	return string(buf)
+	if neg {
+		return "-" + string(buf)
+	} else {
+		return string(buf)
+	}
 }
 
 func Md5Hex(src, salt string) string {

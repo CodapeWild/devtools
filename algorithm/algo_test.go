@@ -124,3 +124,22 @@ func TestTrie(t *testing.T) {
 
 	log.Println(trie.origin)
 }
+
+func TestHeapify(t *testing.T) {
+	hp := NewHeap(CompareInt, Bigger, func(data []int) []interface{} {
+		inters := make([]interface{}, len(data))
+		for k, v := range data {
+			inters[k] = v
+		}
+
+		return inters
+	}([]int{3, 68, 7, 65, 45, 6, 9, 8})...)
+
+	log.Printf("heapified: %v\n", hp.data)
+
+	removed := hp.Remove()
+	for removed != nil {
+		log.Printf("removed: %v, heap: %v", removed, hp.data)
+		removed = hp.Remove()
+	}
+}

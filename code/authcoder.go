@@ -57,7 +57,7 @@ func (this *AuthCoder) SetAuthCodeWithTimeout(flavor string, expsec int64) (auth
 		expsec = this.expSec
 	}
 
-	auth = RandNum(this.bits)
+	auth = RandNumString(uint(this.bits), false)
 	if _, err = this.rdsWrapper.Set(genAuthKey(flavor, auth), rds_set_Value, expsec); err != nil {
 		return "", err
 	}
