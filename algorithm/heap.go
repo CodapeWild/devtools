@@ -3,13 +3,13 @@ package algorithm
 type Heap struct {
 	data       []interface{}
 	comparator Comparator
-	compare    CompareFunc
+	compFunc   CompareFunc
 }
 
-func NewHeap(comparator Comparator, compare CompareFunc, data ...interface{}) *Heap {
+func NewHeap(comparator Comparator, compFunc CompareFunc, data ...interface{}) *Heap {
 	heap := &Heap{
-		comparator: CompareByte,
-		compare:    compare,
+		comparator: comparator,
+		compFunc:   compFunc,
 	}
 	heap.Insert(data...)
 
@@ -31,7 +31,10 @@ func (this *Heap) Count() int {
 func (this *Heap) Insert(data ...interface{}) {
 	for _, v := range data {
 		this.data = append(this.data, v)
-		this.heapifyUp()
+		// this.heapifyUp()
+		child := this.Count() - 1
+		parent := this.parent(child)
+		this.recvHeapifyUp(parent, child)
 	}
 }
 
@@ -53,7 +56,8 @@ func (this *Heap) Remove() interface{} {
 		this.data[0], this.data[c-1] = this.data[c-1], this.data[0]
 		tmp = this.data[c-1]
 		this.data = this.data[:c-1]
-		this.heapifyDown()
+		// this.heapifyDown()
+		this.recvHeapifyDown(0, this.lchild(0), this.rchild(0))
 	}
 
 	return tmp
@@ -76,14 +80,25 @@ func (this *Heap) heapifyUp() {
 		child  = this.Count() - 1
 		parent = this.parent(child)
 	)
-	for parent > 0 {
-		if this.compare(this.comparator)(this.data[child], this.data[parent]) {
+	for child != 0 {
+		if this.compFunc(this.comparator)(this.data[child], this.data[parent]) {
 			this.data[child], this.data[parent] = this.data[parent], this.data[child]
 			child = parent
 			parent = this.parent(child)
 		} else {
 			break
 		}
+	}
+}
+
+func (this *Heap) recvHeapifyUp(parent, child int) {
+	if child == 0 {
+		return
+	}
+
+	if this.compFunc(this.comparator)(this.data[child], this.data[parent]) {
+		this.data[child], this.data[parent] = this.data[parent], this.data[child]
+		this.recvHeapifyUp(this.parent(parent), parent)
 	}
 }
 
@@ -95,10 +110,10 @@ func (this *Heap) heapifyDown() {
 	)
 	for {
 		tmp := parent
-		if lchild <= this.Count()-1 && this.compare(this.comparator)(this.data[parent], this.data[lchild]) {
+		if lchild < this.Count() && this.compFunc(this.comparator)(this.data[lchild], this.data[tmp]) {
 			tmp = lchild
 		}
-		if rchild <= this.Count()-1 && this.compare(this.comparator)(this.data[parent], this.data[rchild]) {
+		if rchild < this.Count() && this.compFunc(this.comparator)(this.data[rchild], this.data[tmp]) {
 			tmp = rchild
 		}
 		if tmp != parent {
@@ -109,5 +124,19 @@ func (this *Heap) heapifyDown() {
 		} else {
 			break
 		}
+	}
+}
+
+func (this *Heap) recvHeapifyDown(parent, lchild, rchild int) {
+	var tmp = parent
+	if lchild < this.Count() && this.compFunc(this.comparator)(this.data[lchild], this.data[tmp]) {
+		tmp = lchild
+	}
+	if rchild < this.Count() && this.compFunc(this.comparator)(this.data[rchild], this.data[tmp]) {
+		tmp = rchild
+	}
+	if tmp != parent {
+		this.data[tmp], this.data[parent] = this.data[parent], this.data[tmp]
+		this.recvHeapifyDown(tmp, this.lchild(tmp), this.rchild(tmp))
 	}
 }

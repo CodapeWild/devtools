@@ -19,6 +19,15 @@ var (
 			return 0
 		}
 	}
+	CompareString StringComp = func(lopr, ropr string) int {
+		if lopr > ropr {
+			return 1
+		} else if lopr < ropr {
+			return -1
+		} else {
+			return 0
+		}
+	}
 )
 
 type Comparator interface {
@@ -38,6 +47,12 @@ type ByteComp func(lopr, ropr byte) int
 
 func (this ByteComp) Compare(lopr, ropr interface{}) int {
 	return this(lopr.(byte), ropr.(byte))
+}
+
+type StringComp func(lopr, ropr string) int
+
+func (this StringComp) Compare(lopr, ropr interface{}) int {
+	return this(lopr.(string), ropr.(string))
 }
 
 type CompareFunc func(comparator Comparator) func(lopr, ropr interface{}) bool
