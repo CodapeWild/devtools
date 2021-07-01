@@ -116,9 +116,48 @@ func TestTrie(t *testing.T) {
 		trie.Add(v)
 	}
 
+	trie.Add("12")
+
 	for _, v := range cases {
 		log.Println(trie.Find(v))
 	}
 
 	log.Println(trie.origin)
+}
+
+func TestHeapify(t *testing.T) {
+	hp := NewHeap(CompareInt, Bigger, func(data []int) []interface{} {
+		inters := make([]interface{}, len(data))
+		for k, v := range data {
+			inters[k] = v
+		}
+
+		return inters
+	}([]int{3, 68, 7, 65, 45, 6, 9, 8})...)
+
+	log.Printf("heapified: %v\n", hp.data)
+
+	removed := hp.Remove()
+	for removed != nil {
+		log.Printf("removed: %v, heap: %v", removed, hp.data)
+		removed = hp.Remove()
+	}
+}
+
+func TestInterfacesAdaptor(t *testing.T) {
+	data := []int{12, 2, 3, 4, 432, 56, 42, 327, 8, 9}
+	ira := NewIntsRandAcc(data)
+	k, v := ira.Next()
+	for v != nil {
+		log.Println(k, v)
+		k, v = ira.Next()
+	}
+
+	m := map[string]string{"name": "tnt", "age": "123", "rank": "999"}
+	mra := NewStrStrMapRandAcc(m)
+	k, v = mra.Next()
+	for v != nil {
+		log.Println(k, v)
+		k, v = mra.Next()
+	}
 }
