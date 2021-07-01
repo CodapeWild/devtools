@@ -13,29 +13,29 @@ type IntsRandAcc struct {
 	i    int
 }
 
-func NewIntsRandAcc(data []int) IntsRandAcc {
-	return IntsRandAcc{data: data}
+func NewIntsRandAcc(data []int) *IntsRandAcc {
+	return &IntsRandAcc{data: data}
 }
 
-func (this IntsRandAcc) Get(key interface{}) interface{} {
+func (this *IntsRandAcc) Get(key interface{}) interface{} {
 	return this.data[key.(int)]
 }
 
-func (this IntsRandAcc) Len() int {
+func (this *IntsRandAcc) Len() int {
 	return len(this.data)
 }
 
-func (this IntsRandAcc) Previous() (key, value interface{}) {
-	if this.i-1 >= 0 {
-		this.i--
+func (this *IntsRandAcc) Previous() (key, value interface{}) {
+	if this.i >= 0 {
 		key = this.i
 		value = this.data[this.i]
+		this.i--
 	}
 
 	return
 }
 
-func (this IntsRandAcc) Current() (key, value interface{}) {
+func (this *IntsRandAcc) Current() (key, value interface{}) {
 	if this.i >= 0 && this.i < this.Len() {
 		key = this.i
 		value = this.data[this.i]
@@ -44,11 +44,11 @@ func (this IntsRandAcc) Current() (key, value interface{}) {
 	return
 }
 
-func (this IntsRandAcc) Next() (key, value interface{}) {
-	if this.i+1 < this.Len() {
-		this.i++
+func (this *IntsRandAcc) Next() (key, value interface{}) {
+	if this.i < this.Len() {
 		key = this.i
 		value = this.data[this.i]
+		this.i++
 	}
 
 	return
@@ -59,29 +59,29 @@ type FloatsRandAcc struct {
 	i    int
 }
 
-func NewFloatsRandAcc(data []float64) FloatsRandAcc {
-	return FloatsRandAcc{data: data}
+func NewFloatsRandAcc(data []float64) *FloatsRandAcc {
+	return &FloatsRandAcc{data: data}
 }
 
-func (this FloatsRandAcc) Get(key interface{}) interface{} {
+func (this *FloatsRandAcc) Get(key interface{}) interface{} {
 	return this.data[key.(int)]
 }
 
-func (this FloatsRandAcc) Len() int {
+func (this *FloatsRandAcc) Len() int {
 	return len(this.data)
 }
 
-func (this FloatsRandAcc) Previous() (key, value interface{}) {
-	if this.i-1 >= 0 {
-		this.i--
+func (this *FloatsRandAcc) Previous() (key, value interface{}) {
+	if this.i >= 0 {
 		key = this.i
 		value = this.data[this.i]
+		this.i--
 	}
 
 	return
 }
 
-func (this FloatsRandAcc) Current() (key, value interface{}) {
+func (this *FloatsRandAcc) Current() (key, value interface{}) {
 	if this.i >= 0 && this.i < this.Len() {
 		key = this.i
 		value = this.data[this.i]
@@ -90,11 +90,11 @@ func (this FloatsRandAcc) Current() (key, value interface{}) {
 	return
 }
 
-func (this FloatsRandAcc) Next() (key, value interface{}) {
-	if this.i+1 < this.Len() {
-		this.i++
+func (this *FloatsRandAcc) Next() (key, value interface{}) {
+	if this.i < this.Len() {
 		key = this.i
 		value = this.data[this.i]
+		this.i++
 	}
 
 	return
@@ -105,29 +105,29 @@ type StringsRandAcc struct {
 	i    int
 }
 
-func NewStringsRandAcc(data []string) StringsRandAcc {
-	return StringsRandAcc{data: data}
+func NewStringsRandAcc(data []string) *StringsRandAcc {
+	return &StringsRandAcc{data: data}
 }
 
-func (this StringsRandAcc) Get(key interface{}) interface{} {
+func (this *StringsRandAcc) Get(key interface{}) interface{} {
 	return this.data[key.(int)]
 }
 
-func (this StringsRandAcc) Len() int {
+func (this *StringsRandAcc) Len() int {
 	return len(this.data)
 }
 
-func (this StringsRandAcc) Previous() (key, value interface{}) {
-	if this.i-1 >= 0 {
-		this.i--
+func (this *StringsRandAcc) Previous() (key, value interface{}) {
+	if this.i >= 0 {
 		key = this.i
 		value = this.data[this.i]
+		this.i--
 	}
 
 	return
 }
 
-func (this StringsRandAcc) Current() (key, value interface{}) {
+func (this *StringsRandAcc) Current() (key, value interface{}) {
 	if this.i >= 0 && this.i < this.Len() {
 		key = this.i
 		value = this.data[this.i]
@@ -136,11 +136,11 @@ func (this StringsRandAcc) Current() (key, value interface{}) {
 	return
 }
 
-func (this StringsRandAcc) Next() (key, value interface{}) {
-	if this.i+1 < this.Len() {
-		this.i++
+func (this *StringsRandAcc) Next() (key, value interface{}) {
+	if this.i < this.Len() {
 		key = this.i
 		value = this.data[this.i]
+		this.i++
 	}
 
 	return
@@ -152,7 +152,7 @@ type StrStrMapRandAcc struct {
 	i    int
 }
 
-func NewStrStrMapRandAcc(data map[string]string) StrStrMapRandAcc {
+func NewStrStrMapRandAcc(data map[string]string) *StrStrMapRandAcc {
 	keys := make([]string, len(data))
 	i := 0
 	for k := range data {
@@ -160,31 +160,31 @@ func NewStrStrMapRandAcc(data map[string]string) StrStrMapRandAcc {
 		i++
 	}
 
-	return StrStrMapRandAcc{
+	return &StrStrMapRandAcc{
 		data: data,
 		keys: keys,
 	}
 }
 
-func (this StrStrMapRandAcc) Get(key interface{}) interface{} {
+func (this *StrStrMapRandAcc) Get(key interface{}) interface{} {
 	return this.data[key.(string)]
 }
 
-func (this StrStrMapRandAcc) Len() int {
+func (this *StrStrMapRandAcc) Len() int {
 	return len(this.data)
 }
 
-func (this StrStrMapRandAcc) Previous() (key, value interface{}) {
-	if this.i-1 >= 0 {
-		this.i--
+func (this *StrStrMapRandAcc) Previous() (key, value interface{}) {
+	if this.i >= 0 {
 		key = this.keys[this.i]
 		value = this.data[this.keys[this.i]]
+		this.i--
 	}
 
 	return
 }
 
-func (this StrStrMapRandAcc) Current() (key, value interface{}) {
+func (this *StrStrMapRandAcc) Current() (key, value interface{}) {
 	if this.i >= 0 && this.i < this.Len() {
 		key = this.keys[this.i]
 		value = this.data[this.keys[this.i]]
@@ -193,11 +193,11 @@ func (this StrStrMapRandAcc) Current() (key, value interface{}) {
 	return
 }
 
-func (this StrStrMapRandAcc) Next() (key, value interface{}) {
-	if this.i+1 < this.Len() {
-		this.i++
+func (this *StrStrMapRandAcc) Next() (key, value interface{}) {
+	if this.i < this.Len() {
 		key = this.keys[this.i]
 		value = this.data[this.keys[this.i]]
+		this.i++
 	}
 
 	return
