@@ -31,6 +31,6 @@ func Float64sToInterfaceAry(data []float64) []interface{} {
 	return converter(NewFloatsRandAcc(data))
 }
 
-func StringsToInterfaceAry(data []string) ToInterfaceAryFunc {
+func StringsToInterfaceAry(data []string) []interface{} {
 	return converter(NewStringsRandAcc(data))
 }

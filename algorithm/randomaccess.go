@@ -109,6 +109,10 @@ func NewStringsRandAcc(data []string) StringsRandAcc {
 	return StringsRandAcc{data: data}
 }
 
+func (this StringsRandAcc) Get(key interface{}) interface{} {
+	return this.data[key.(int)]
+}
+
 func (this StringsRandAcc) Len() int {
 	return len(this.data)
 }
@@ -148,7 +152,7 @@ type StrStrMapRandAcc struct {
 	i    int
 }
 
-func NewStrAtrMapRandAcc(data map[string]string) StrStrMapRandAcc {
+func NewStrStrMapRandAcc(data map[string]string) StrStrMapRandAcc {
 	keys := make([]string, len(data))
 	i := 0
 	for k := range data {
@@ -160,6 +164,10 @@ func NewStrAtrMapRandAcc(data map[string]string) StrStrMapRandAcc {
 		data: data,
 		keys: keys,
 	}
+}
+
+func (this StrStrMapRandAcc) Get(key interface{}) interface{} {
+	return this.data[key.(string)]
 }
 
 func (this StrStrMapRandAcc) Len() int {
