@@ -143,3 +143,21 @@ func TestHeapify(t *testing.T) {
 		removed = hp.Remove()
 	}
 }
+
+func TestInterfacesAdaptor(t *testing.T) {
+	data := []int{12, 2, 3, 4, 432, 56, 42, 327, 8, 9}
+	ira := NewIntsRandAcc(data)
+	k, v := ira.Next()
+	for v != nil {
+		log.Println(k, v)
+		k, v = ira.Next()
+	}
+
+	m := map[string]string{"name": "tnt", "age": "123", "rank": "999"}
+	mra := NewStrStrMapRandAcc(m)
+	k, v = mra.Next()
+	for v != nil {
+		log.Println(k, v)
+		k, v = mra.Next()
+	}
+}
