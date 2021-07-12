@@ -32,7 +32,7 @@ FOUND:
 
 // parse json data from request
 func ReadJson(req *http.Request, param interface{}) error {
-	if param == nil || reflect.TypeOf(param).Kind() != reflect.Ptr {
+	if rv := reflect.ValueOf(param); rv.Kind() != reflect.Ptr || rv.IsNil() {
 		return comerr.ErrParamInvalid
 	}
 
