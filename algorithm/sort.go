@@ -14,15 +14,14 @@ func (this *ReverseSort) Less(i, j int) bool {
 	return !this.Interface.Less(i, j)
 }
 
-func QuickSort(data sort.Interface, left, right int) {
+func Quicksort(data sort.Interface, left, right int) {
 	if left >= right {
 		return
 	}
 
-	pivot := left + rand.Intn(right-left)
-	data.Swap(pivot, left)
-	pivot = left
-	candi, cur := left, left+1
+	// create random pivot
+	data.Swap(left+rand.Intn(right-left), left)
+	var pivot, candi, cur = left, left, left + 1
 	for cur < right {
 		if data.Less(cur, pivot) {
 			candi++
@@ -30,15 +29,15 @@ func QuickSort(data sort.Interface, left, right int) {
 		}
 		cur++
 	}
-	data.Swap(candi, pivot)
+	data.Swap(pivot, candi)
 
-	QuickSort(data, left, candi)
-	QuickSort(data, candi+1, right)
+	Quicksort(data, left, candi)
+	Quicksort(data, candi+1, right)
 }
 
 // quick sort data from start to end
-func QuickSortOverall(data sort.Interface) {
-	QuickSort(data, 0, data.Len())
+func QuicksortOverall(data sort.Interface) {
+	Quicksort(data, 0, data.Len())
 }
 
 func QuickLocate(data sort.Interface, ith int) error {
@@ -51,7 +50,7 @@ func QuickLocate(data sort.Interface, ith int) error {
 		pivot int
 	)
 RELOCATE:
-	pivot = quickSortOnce(data, s, e)
+	pivot = quicksortOnce(data, s, e)
 	if pivot < ith {
 		s++
 		goto RELOCATE
@@ -64,7 +63,7 @@ RELOCATE:
 }
 
 // return the pivot index after sorting once
-func quickSortOnce(data sort.Interface, start, end int) int {
+func quicksortOnce(data sort.Interface, start, end int) int {
 	var i, j, pivot = start, start + 1, start
 	for j < end {
 		if data.Less(j, pivot) {
