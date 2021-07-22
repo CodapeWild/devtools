@@ -1,12 +1,12 @@
 package code
 
 import (
-	"devtools/db/redisdb"
 	"fmt"
 	"log"
 	"math/rand"
 	"testing"
 
+	"github.com/CodapeWild/devtools/db/redisdb"
 	"gopkg.in/mgo.v2/bson"
 )
 

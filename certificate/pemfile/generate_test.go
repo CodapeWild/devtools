@@ -2,10 +2,11 @@ package pemfile
 
 import (
 	"crypto/rsa"
-	"devtools/certificate/secure"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/CodapeWild/devtools/certificate/secure"
 )
 
 func init() {

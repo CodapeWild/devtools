@@ -1,9 +1,10 @@
 package validator
 
 import (
-	"devtools/charset"
 	"regexp"
 	"strings"
+
+	"github.com/CodapeWild/devtools/charset"
 )
 
 var countries = map[string]*regexp.Regexp{

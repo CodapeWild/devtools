@@ -1,11 +1,11 @@
 package access
 
 import (
-	"devtools/db/mongodb"
 	"log"
 	"os"
 	"testing"
 
+	"github.com/CodapeWild/devtools/db/mongodb"
 	"gopkg.in/mgo.v2/bson"
 )
 

@@ -1,8 +1,9 @@
 package algorithm
 
 import (
-	"devtools/comerr"
 	"unicode/utf8"
+
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 type TrieNode struct {

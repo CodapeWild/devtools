@@ -1,6 +1,6 @@
 package session
 
-import "devtools/db/redisdb"
+import "github.com/CodapeWild/devtools/db/redisdb"
 
 const rds_sess_prefix = "rds_sess_"
 

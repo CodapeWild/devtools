@@ -1,13 +1,14 @@
 package file
 
 import (
-	"devtools/comerr"
 	"encoding/json"
 	"html/template"
 	"io"
 	"io/ioutil"
 	"path"
 	"reflect"
+
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 func ReadJsonFile(filePath string, out interface{}) error {

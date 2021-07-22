@@ -7,9 +7,6 @@ import (
 	"crypto/sha1"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"devtools/certificate/secure"
-	"devtools/comerr"
-	"devtools/file"
 	"encoding/pem"
 	"errors"
 	"io"
@@ -19,6 +16,10 @@ import (
 	"os"
 	"path"
 	"time"
+
+	"github.com/CodapeWild/devtools/certificate/secure"
+	"github.com/CodapeWild/devtools/comerr"
+	"github.com/CodapeWild/devtools/file"
 )
 
 type KeyFileType string

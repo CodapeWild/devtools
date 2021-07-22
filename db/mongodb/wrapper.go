@@ -1,9 +1,9 @@
 package mongodb
 
 import (
-	"devtools/comerr"
 	"reflect"
 
+	"github.com/CodapeWild/devtools/comerr"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

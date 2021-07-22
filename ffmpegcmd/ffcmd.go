@@ -1,16 +1,17 @@
 package ffmpegcmd
 
 import (
-	"devtools/clock"
-	"devtools/comerr"
-	"devtools/command"
-	"devtools/file"
 	"fmt"
 	"log"
 	"os/exec"
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/CodapeWild/devtools/clock"
+	"github.com/CodapeWild/devtools/comerr"
+	"github.com/CodapeWild/devtools/command"
+	"github.com/CodapeWild/devtools/file"
 )
 
 type FFStream struct {

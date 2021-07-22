@@ -2,7 +2,6 @@ package fileque
 
 import (
 	"database/sql"
-	"devtools/comerr"
 	"devtools/idflaker"
 	"devtools/msgque"
 	"encoding/base64"
@@ -12,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/CodapeWild/devtools/comerr"
 	_ "github.com/mattn/go-sqlite3"
 )
 

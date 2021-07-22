@@ -1,11 +1,12 @@
 package clock
 
 import (
-	"devtools/comerr"
 	"fmt"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 func NowMillisec() int64 {

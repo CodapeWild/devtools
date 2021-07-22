@@ -2,10 +2,10 @@ package mongodb
 
 import (
 	"crypto/tls"
-	"devtools/tlsext"
 	"net"
 	"time"
 
+	"github.com/CodapeWild/devtools/tlsext"
 	"gopkg.in/mgo.v2"
 )
 

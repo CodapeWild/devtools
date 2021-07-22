@@ -1,13 +1,14 @@
 package fileque
 
 import (
-	"devtools/msgque"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/CodapeWild/devtools/msgque"
 )
 
 func TestFileQue(t *testing.T) {

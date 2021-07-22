@@ -1,10 +1,11 @@
 package redisdb
 
 import (
-	"devtools/file"
 	"log"
 	"os"
 	"testing"
+
+	"github.com/CodapeWild/devtools/file"
 )
 
 var (
