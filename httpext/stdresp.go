@@ -2,10 +2,11 @@ package httpext
 
 import (
 	"bytes"
-	"devtools/comerr"
 	"encoding/gob"
 	"encoding/json"
 	"net/http"
+
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 type StdStatus struct {

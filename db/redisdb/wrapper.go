@@ -1,9 +1,9 @@
 package redisdb
 
 import (
-	"devtools/comerr"
 	"reflect"
 
+	"github.com/CodapeWild/devtools/comerr"
 	"github.com/garyburd/redigo/redis"
 )
 

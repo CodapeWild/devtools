@@ -1,12 +1,12 @@
 package access
 
 import (
-	"devtools/comerr"
-	"devtools/db/mongodb"
 	"errors"
 	"log"
 	"time"
 
+	"github.com/CodapeWild/devtools/comerr"
+	"github.com/CodapeWild/devtools/db/mongodb"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

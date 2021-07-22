@@ -1,9 +1,10 @@
 package algorithm
 
 import (
-	"devtools/comerr"
 	"math/rand"
 	"sort"
+
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 type ReverseSort struct {

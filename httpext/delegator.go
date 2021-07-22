@@ -2,7 +2,6 @@ package httpext
 
 import (
 	"bytes"
-	"devtools/comerr"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -10,6 +9,8 @@ import (
 	"net/url"
 	"reflect"
 	"time"
+
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 var defClient = &http.Client{Timeout: time.Second}

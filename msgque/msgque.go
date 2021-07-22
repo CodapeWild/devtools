@@ -1,9 +1,10 @@
 package msgque
 
 import (
-	"devtools/code"
 	"sync"
 	"time"
+
+	"github.com/CodapeWild/devtools/code"
 )
 
 const (
