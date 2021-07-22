@@ -1,11 +1,11 @@
 package mongodb
 
 import (
-	"devtools/file"
 	"log"
 	"os"
 	"testing"
 
+	"github.com/CodapeWild/devtools/file"
 	"gopkg.in/mgo.v2/bson"
 )
 

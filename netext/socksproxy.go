@@ -1,11 +1,12 @@
 package netext
 
 import (
-	"devtools/comerr"
 	"errors"
 	"net"
 	"net/url"
 	"time"
+
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 var (

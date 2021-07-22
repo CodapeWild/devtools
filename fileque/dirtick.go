@@ -2,12 +2,13 @@ package fileque
 
 import (
 	"database/sql"
-	"devtools/idflaker"
-	"devtools/msgque"
 	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/CodapeWild/devtools/idflaker"
+	"github.com/CodapeWild/devtools/msgque"
 )
 
 type DirTicket struct {

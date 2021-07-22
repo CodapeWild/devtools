@@ -1,11 +1,12 @@
 package idflaker
 
 import (
-	"devtools/clock"
-	"devtools/comerr"
 	"encoding/base64"
 	"encoding/binary"
 	"sync"
+
+	"github.com/CodapeWild/devtools/clock"
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 /*

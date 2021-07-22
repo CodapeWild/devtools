@@ -2,13 +2,14 @@ package command
 
 import (
 	"bytes"
-	"devtools/comerr"
-	"devtools/file"
 	"encoding/json"
 	"io/ioutil"
 	"os/exec"
 	"reflect"
 	"time"
+
+	"github.com/CodapeWild/devtools/comerr"
+	"github.com/CodapeWild/devtools/file"
 )
 
 type Command struct {

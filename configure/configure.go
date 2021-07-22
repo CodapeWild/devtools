@@ -1,11 +1,12 @@
 package configure
 
 import (
-	"devtools/comerr"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"reflect"
+
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 type Configure interface {

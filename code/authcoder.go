@@ -1,8 +1,6 @@
 package code
 
-import (
-	"devtools/db/redisdb"
-)
+import "github.com/CodapeWild/devtools/db/redisdb"
 
 const (
 	rds_prefix    = "auth_coder_"

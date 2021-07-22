@@ -1,8 +1,9 @@
 package httpext
 
 import (
-	"devtools/session"
 	"net/http"
+
+	"github.com/CodapeWild/devtools/session"
 )
 
 const (

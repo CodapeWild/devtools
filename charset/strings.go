@@ -2,11 +2,12 @@ package charset
 
 import (
 	"bytes"
-	"devtools/comerr"
 	"log"
 	"reflect"
 	"strings"
 	"text/template"
+
+	"github.com/CodapeWild/devtools/comerr"
 )
 
 func FoldByMax(src string, maxLineChars int) string {
