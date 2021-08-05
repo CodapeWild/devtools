@@ -14,7 +14,7 @@ import (
 func RemoteIp(req *http.Request) (ip, port string) {
 	var err error
 BREAKPOINT:
-	for _, h := range []string{"x-forwarded-for", "x-real-ip", "proxy-client-ip"} {
+	for _, h := range []string{"x-forwarded-for", "X-FORWARDED-FOR", "X-Forwarded-For", "x-real-ip", "X-REAL-IP", "X-Real-Ip", "proxy-client-ip", "PROXY-CLIENT-IP", "Proxy-Client-Ip"} {
 		addrs := strings.Split(req.Header.Get(h), ",")
 		for _, addr := range addrs {
 			if ip, port, err = net.SplitHostPort(addr); err != nil || ip == "" {
