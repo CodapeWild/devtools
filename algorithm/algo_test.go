@@ -13,7 +13,7 @@ var (
 )
 
 func TestBinarySearch(t *testing.T) {
-	QuickSort(sdata, 0, len(sdata))
+	Quicksort(sdata, 0, len(sdata))
 	log.Println(sdata)
 	log.Println(BinarySearch(IntSearchable(sdata), 2))
 	log.Println(BinarySearch(IntSearchable(sdata), 9))
@@ -22,22 +22,22 @@ func TestBinarySearch(t *testing.T) {
 }
 
 func TestDisorder(t *testing.T) {
-	QuickSort(sdata, 0, len(sdata))
+	Quicksort(sdata, 0, len(sdata))
 	log.Println(sdata)
 	Disorder(sdata, 7, 12)
 	log.Println(sdata)
 }
 
-func TestQuickSort(t *testing.T) {
+func TestQuicksort(t *testing.T) {
 	log.Println(sdata)
-	QuickSort(sdata, 0, sdata.Len())
+	Quicksort(sdata, 0, sdata.Len())
 	log.Println(sdata)
 }
 
 func TestQuickLocate(t *testing.T) {
 	order := 9
 	log.Println(QuickLocate(sdata, order), order, sdata[order])
-	QuickSort(sdata, 0, sdata.Len())
+	Quicksort(sdata, 0, sdata.Len())
 	log.Println(sdata)
 }
 

@@ -41,10 +41,12 @@ func (this SimpleCallback) Call(rslt interface{}) {
 }
 
 func (this SimpleCallback) CallWithTimeout(rslt interface{}, timeout time.Duration) (err error) {
+	tmr := time.NewTimer(timeout)
+	defer tmr.Stop()
 	if this != nil {
 		select {
 		case this <- rslt:
-		case <-time.After(timeout):
+		case <-tmr.C:
 			err = ErrCallbackSendTimeout
 		}
 	}
@@ -53,10 +55,12 @@ func (this SimpleCallback) CallWithTimeout(rslt interface{}, timeout time.Durati
 }
 
 func (this SimpleCallback) Wait(timeout time.Duration) (rslt interface{}, err error) {
+	tmr := time.NewTimer(timeout)
+	defer tmr.Stop()
 	if this != nil {
 		select {
 		case rslt = <-this:
-		case <-time.After(timeout):
+		case <-tmr.C:
 			err = ErrCallbackReceiveTimeout
 		}
 	}
