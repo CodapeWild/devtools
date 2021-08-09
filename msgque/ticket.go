@@ -1,12 +1,13 @@
 package msgque
 
+type Ticket struct{}
+
 type TicketQueue interface {
-	MaxThreads() int
 	Fill()
-	Generate() interface{}
-	Fetch() interface{}
-	Restore(ticket interface{})
-	Traverse(eachWithBreak func(ticket interface{}) bool)
+	Fetch() Ticket
+	Restore(ticket Ticket)
+	Len() int
+	Cap() int
 }
 
 type SimpleTicketQueue chan struct{}
@@ -15,34 +16,24 @@ func NewSimpleTicketQueue(maxThreads int) SimpleTicketQueue {
 	return make(chan struct{}, maxThreads)
 }
 
-func (this SimpleTicketQueue) MaxThreads() int {
-	return cap(this)
-}
-
 func (this SimpleTicketQueue) Fill() {
-	for i := len(this); i < cap(this); i++ {
-		this.Restore(this.Generate())
+	for i := this.Len(); i < this.Cap(); i++ {
+		this.Restore(Ticket{})
 	}
 }
 
-func (this SimpleTicketQueue) Generate() struct{} {
-	return struct{}{}
-}
-
-func (this SimpleTicketQueue) Fetch() struct{} {
+func (this SimpleTicketQueue) Fetch() Ticket {
 	return <-this
 }
 
-func (this SimpleTicketQueue) Restore(ticket struct{}) {
+func (this SimpleTicketQueue) Restore(ticket Ticket) {
 	this <- ticket
 }
 
-func (this SimpleTicketQueue) Traverse(eachWithBreak func(ticket struct{}) bool) {
-	for i := 0; i < len(this); i++ {
-		ticket := <-this
-		if eachWithBreak(ticket) {
-			return
-		}
-		this <- ticket
-	}
+func (this SimpleTicketQueue) Len() int {
+	return len(this)
+}
+
+func (this SimpleTicketQueue) Cap() int {
+	return cap(this)
 }
