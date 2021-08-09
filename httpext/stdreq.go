@@ -2,7 +2,7 @@ package httpext
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"reflect"
@@ -11,19 +11,19 @@ import (
 	"github.com/CodapeWild/devtools/comerr"
 )
 
-func RemoteIp(req *http.Request) (ip, port string) {
-	var err error
-	for _, h := range []string{"x-forwarded-for", "x-real-ip", "proxy-client-ip"} {
+// RemoteAddr get remote ip who send the request and try to get the authentic ip:port
+// hidden behind behind proxy.
+func RemoteAddr(req *http.Request) (ip, port string) {
+BREAKPOINT:
+	for _, h := range []string{"x-forwarded-for", "X-FORWARDED-FOR", "X-Forwarded-For", "x-real-ip", "X-REAL-IP", "X-Real-Ip", "proxy-client-ip", "PROXY-CLIENT-IP", "Proxy-Client-Ip"} {
 		addrs := strings.Split(req.Header.Get(h), ",")
-		for i := len(addrs) - 1; i >= 0; i-- {
-			if ip, port, err = net.SplitHostPort(addrs[i]); err != nil || ip == "" {
+		for _, addr := range addrs {
+			if ip, port, _ = net.SplitHostPort(addr); ip == "" {
 				continue
-			} else {
-				goto FOUND
 			}
+			break BREAKPOINT
 		}
 	}
-FOUND:
 	if ip == "" {
 		ip, port, _ = net.SplitHostPort(req.RemoteAddr)
 	}
@@ -31,17 +31,16 @@ FOUND:
 	return
 }
 
-// parse json data from request
-func ReadJson(req *http.Request, param interface{}) error {
-	if rv := reflect.ValueOf(param); rv.Kind() != reflect.Ptr || rv.IsNil() {
+func UnmarshalJsonReq(req *http.Request, out interface{}) error {
+	if rv := reflect.ValueOf(out); rv.IsNil() || rv.Kind() != reflect.Ptr {
 		return comerr.ErrParamInvalid
 	}
 
-	buf, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return err
-	}
+	body, err := io.ReadAll(req.Body)
 	defer req.Body.Close()
+	if err != nil {
+		return nil
+	}
 
-	return json.Unmarshal(buf, param)
+	return json.Unmarshal(body, out)
 }

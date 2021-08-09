@@ -147,10 +147,12 @@ func (this *MessageQueue) Send(msg Message) error {
 		return err
 	}
 
+	tmr := time.NewTimer(this.timeout)
+	defer tmr.Stop()
 	select {
 	case this.msgChan <- msg: // message enqueue
 		return nil
-	case <-time.After(this.timeout): // message enqueue timeout, cache up if Cache exists
+	case <-tmr.C: // message enqueue timeout, cache up if Cache exists
 		err = ErrMsgQEnqueOvertime
 		if this.cache == nil || !this.cache.Push(msg) {
 			err = ErrCachePushFailed

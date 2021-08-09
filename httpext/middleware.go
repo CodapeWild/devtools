@@ -15,22 +15,15 @@ const (
 	IANA_ContextKey                = "MIME_CTX"
 )
 
-func GetOnly(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
-			respw.WriteHeader(http.StatusMethodNotAllowed)
-		} else {
-			handler.ServeHTTP(respw, req)
-		}
-	})
-}
+type MiddlewareFunc func(handler http.Handler) http.Handler
 
-func PostOnly(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodPost {
-			respw.WriteHeader(http.StatusMethodNotAllowed)
-		} else {
-			handler.ServeHTTP(respw, req)
+func MethodFilter(method string, handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		switch method {
+		case http.MethodConnect, http.MethodHead, http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete:
+			handler.ServeHTTP(resp, req)
+		default:
+			resp.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	})
 }
@@ -45,6 +38,7 @@ func AfterLogin(handler http.Handler, sessToken session.SessToken) http.Handler 
 	})
 }
 
+// uncomplete
 // // map[media]struct{AllowTypes: [aac, mp4, x-flv, jpeg...], MaxSize: kb}
 // type MIMEValidator map[string]struct {
 // 	AllowedTypes []string `json:"allowed_types"`
