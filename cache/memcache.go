@@ -1,14 +1,6 @@
-package msgque
+package cache
 
-import (
-	"sync"
-)
-
-type Cache interface {
-	Push(obj interface{}) bool
-	Pop() interface{}
-	Len() int
-}
+import "sync"
 
 type MemCache struct {
 	mem []interface{}
@@ -37,9 +29,10 @@ func (this *MemCache) Pop() interface{} {
 	return tmp
 }
 
-func (this *MemCache) Len() int {
-	this.Lock()
-	defer this.Unlock()
+func (this *MemCache) Clear() {
+	this.mem = this.mem[:0]
+}
 
+func (this *MemCache) Len() int {
 	return len(this.mem)
 }
