@@ -7,6 +7,7 @@ import (
 type Cache interface {
 	Push(obj interface{}) bool
 	Pop() interface{}
+	Clear()
 	Len() int
 }
 
@@ -37,9 +38,15 @@ func (this *MemCache) Pop() interface{} {
 	return tmp
 }
 
-func (this *MemCache) Len() int {
-	this.Lock()
-	defer this.Unlock()
+func (this *MemCache) Clear() {
+	if len(this.mem) != 0 {
+		this.Lock()
+		defer this.Unlock()
 
+		this.mem = this.mem[:0]
+	}
+}
+
+func (this *MemCache) Len() int {
 	return len(this.mem)
 }
