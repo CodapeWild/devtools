@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/CodapeWild/devtools/cache"
 	"github.com/CodapeWild/devtools/code"
 )
 
@@ -36,7 +37,7 @@ type critical struct {
 
 type MessageQueue struct {
 	tq      TicketQueue
-	cache   Cache
+	cache   cache.Cache
 	msgChan chan Message
 	queBuf  int
 	timeout time.Duration
@@ -53,7 +54,7 @@ func SetMsgQTicket(tickq TicketQueue) MessageQueueSetting {
 	}
 }
 
-func SetMsgQCache(cache Cache) MessageQueueSetting {
+func SetMsgQCache(cache cache.Cache) MessageQueueSetting {
 	return func(msgq *MessageQueue) {
 		msgq.cache = cache
 	}
