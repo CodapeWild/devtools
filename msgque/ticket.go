@@ -6,7 +6,6 @@ type TicketQueue interface {
 	Generate() interface{}
 	Fetch() interface{}
 	Restore(ticket interface{})
-	Traverse(eachWithBreak func(ticket interface{}) bool)
 }
 
 type SimpleTicketQueue chan struct{}
@@ -35,14 +34,4 @@ func (this SimpleTicketQueue) Fetch() struct{} {
 
 func (this SimpleTicketQueue) Restore(ticket struct{}) {
 	this <- ticket
-}
-
-func (this SimpleTicketQueue) Traverse(eachWithBreak func(ticket struct{}) bool) {
-	for i := 0; i < len(this); i++ {
-		ticket := <-this
-		if eachWithBreak(ticket) {
-			return
-		}
-		this <- ticket
-	}
 }
