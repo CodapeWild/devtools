@@ -10,10 +10,10 @@ type TicketQueue interface {
 	Cap() int
 }
 
-type SimpleTicketQueue chan struct{}
+type SimpleTicketQueue chan Ticket
 
 func NewSimpleTicketQueue(maxThreads int) SimpleTicketQueue {
-	return make(chan struct{}, maxThreads)
+	return make(chan Ticket, maxThreads)
 }
 
 func (this SimpleTicketQueue) Fill() {
