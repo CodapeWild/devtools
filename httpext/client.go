@@ -29,7 +29,7 @@ var (
 	}
 	maxConcurrency uint = 10
 	newTicketOnce  sync.Once
-	tickets        msgque.TicketQueue
+	tkque          msgque.TicketQueue
 )
 
 func UseProxy(addr string) {
@@ -50,6 +50,16 @@ func SetMaxConcurrency(max uint) {
 
 func SendRequest(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
 	newTicketOnce.Do(func() {
-		tickets = msgque.NewSimpleTicketQueue(int(maxConcurrency))
+		tkque = msgque.NewSimpleTicketQueue(int(maxConcurrency))
 	})
+
+	go func(ticket msgque.Ticket, ctx context.Context, req *http.Request) {
+		var timeout time.Duration
+		if deadline, ok := ctx.Deadline(); ok {
+			timeout = deadline.Sub(time.Now())
+		}
+
+		(&http.Client{Transport: defTransport, Timeout: timeout}).Do(req)
+		tkque.Restore(ticket)
+	}(tkque.Fetch(), ctx, req)
 }
