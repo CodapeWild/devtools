@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"mime"
 	"net/http"
@@ -230,6 +231,10 @@ func (this *FileServer) Upload(resp http.ResponseWriter, req *http.Request) {
 }
 
 func (this *FileServer) Download(resp http.ResponseWriter, req *http.Request) {
+
+}
+
+func (this *FileServer) ReadDir(name string) ([]fs.DirEntry, error) {
 
 }
 
