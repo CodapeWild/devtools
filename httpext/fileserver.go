@@ -123,6 +123,9 @@ func RegisterDownloadPattern(pattern string, middleware MiddlewareFunc) Option {
 
 func RegisterOpenPattern(pattern string) Option {
 	return func(fsrv *FileServer) {
+		if len(pattern) > 0 && pattern[len(pattern)-1] != '/' {
+			pattern += "/"
+		}
 		fsrv.Handle(pattern, http.StripPrefix(pattern, http.FileServer(fsrv)))
 	}
 }
@@ -231,7 +234,7 @@ func (this *FileServer) Download(resp http.ResponseWriter, req *http.Request) {
 }
 
 func (this *FileServer) Open(filePath string) (http.File, error) {
-
+	http.ServeFile()
 }
 
 // func CheckMultiFile(handler http.Handler, formFileKey string, mval MIMEValidator) http.Handler {
