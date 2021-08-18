@@ -234,7 +234,7 @@ func (this *FileServer) Download(resp http.ResponseWriter, req *http.Request) {
 }
 
 func (this *FileServer) Open(filePath string) (http.File, error) {
-	http.ServeFile()
+
 }
 
 // func CheckMultiFile(handler http.Handler, formFileKey string, mval MIMEValidator) http.Handler {
