@@ -156,12 +156,18 @@ func (this *FileServer) Upload(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	req.ParseForm()
+	//
 	mulf, mulh, err := req.FormFile(this.uploadFileHeader)
 	if err != nil {
 		log.Println(err.Error())
 		resp.WriteHeader(http.StatusBadRequest)
 
 		return
+	}
+	//
+	for _, h := range req.MultipartForm.File[""] {
+		io.write
 	}
 
 	if mulh.Size > this.maxUploadFileSize {
