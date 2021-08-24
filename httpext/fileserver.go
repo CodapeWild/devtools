@@ -52,57 +52,57 @@ type FileServer struct {
 	writefile         func(dir, filename, extension string, buf []byte) error
 }
 
-type Option func(fsrv *FileServer)
+type FSrvOption func(fsrv *FileServer)
 
-func ConfigRootDir(root string) Option {
+func ConfigRootDir(root string) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.root = root
 	}
 }
 
-func ConfigListDir(list bool) Option {
+func ConfigListDir(list bool) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.listDir = list
 	}
 }
 
-func ConfigUploadFileHeader(field string) Option {
+func ConfigUploadFileHeader(field string) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.uploadFileHeader = field
 	}
 }
 
-func ConfigMaxMemoryUsage(max int64) Option {
+func ConfigMaxMemoryUsage(max int64) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.maxMemoryUsage = max
 	}
 }
 
-func ConfigMaxUploadFileSize(max int64) Option {
+func ConfigMaxUploadFileSize(max int64) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.maxUploadFileSize = max
 	}
 }
 
-func ConfigValidContentTypes(types map[string]string) Option {
+func ConfigValidContentTypes(types map[string]string) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.validContentTypes = types
 	}
 }
 
-func ConfigMkDirFunc(mkdir func(req *http.Request, root string) (string, error)) Option {
+func ConfigMkDirFunc(mkdir func(req *http.Request, root string) (string, error)) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.mkdir = mkdir
 	}
 }
 
-func ConfigWriteFileFunc(writefile func(dir, filename, extension string, buf []byte) error) Option {
+func ConfigWriteFileFunc(writefile func(dir, filename, extension string, buf []byte) error) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.writefile = writefile
 	}
 }
 
-func RegisterUploadPattern(pattern string, middleware MiddlewareFunc) Option {
+func RegisterUploadPattern(pattern string, middleware MiddlewareFunc) FSrvOption {
 	return func(fsrv *FileServer) {
 		if middleware == nil {
 			fsrv.HandleFunc(pattern, fsrv.Upload)
@@ -112,7 +112,7 @@ func RegisterUploadPattern(pattern string, middleware MiddlewareFunc) Option {
 	}
 }
 
-func RegisterDownloadPattern(pattern string, middleware MiddlewareFunc) Option {
+func RegisterDownloadPattern(pattern string, middleware MiddlewareFunc) FSrvOption {
 	return func(fsrv *FileServer) {
 		if middleware == nil {
 			fsrv.HandleFunc(pattern, fsrv.Download)
@@ -122,7 +122,7 @@ func RegisterDownloadPattern(pattern string, middleware MiddlewareFunc) Option {
 	}
 }
 
-func RegisterOpenPattern(pattern string) Option {
+func RegisterOpenPattern(pattern string) FSrvOption {
 	return func(fsrv *FileServer) {
 		if len(pattern) > 0 && pattern[len(pattern)-1] != '/' {
 			pattern += "/"
@@ -131,7 +131,7 @@ func RegisterOpenPattern(pattern string) Option {
 	}
 }
 
-func NewFileServer(opts ...Option) *FileServer {
+func NewFileServer(opts ...FSrvOption) *FileServer {
 	fsrv := &FileServer{
 		root:              root_dir,
 		uploadFileHeader:  upload_file_header,
