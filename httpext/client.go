@@ -41,6 +41,13 @@ func WithTransport(transport *http.Transport) ClntOption {
 	}
 }
 
+func NewTransportWithProxy(proxy *url.URL) *http.Transport {
+	transport := defTransport.Clone()
+	transport.Proxy = http.ProxyURL(proxy)
+
+	return transport
+}
+
 func SendRequest(req *http.Request, opts ...ClntOption) (*http.Response, error) {
 	clnt := &http.Client{Transport: defTransport}
 	for _, opt := range opts {
