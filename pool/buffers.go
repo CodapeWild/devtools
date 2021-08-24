@@ -11,6 +11,7 @@ var bufpool sync.Pool = sync.Pool{
 	},
 }
 
+// GetBuffer get the empty Buffer from pool, the Buffer could contain underlying storage.
 func GetBuffer() *bytes.Buffer {
 	temp := bufpool.Get().(*bytes.Buffer)
 	temp.Reset()
@@ -18,6 +19,7 @@ func GetBuffer() *bytes.Buffer {
 	return temp
 }
 
+// RestoreBuffer restore the Buffer into pool.
 func RestoreBuffer(temp *bytes.Buffer) {
 	bufpool.Put(temp)
 }
