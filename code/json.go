@@ -9,18 +9,18 @@ import (
 	"github.com/hashicorp/go-msgpack/codec"
 )
 
-var msgpHandler = &codec.MsgpackHandle{}
+var jsonHandler = &codec.JsonHandle{}
 
-func MsgpMarshal(v interface{}) ([]byte, error) {
+func JsonMarshal(v interface{}) ([]byte, error) {
 	buf := pool.GetBuffer()
 	defer pool.RestoreBuffer(buf)
 
-	err := codec.NewEncoder(buf, msgpHandler).Encode(v)
+	err := codec.NewEncoder(buf, jsonHandler).Encode(v)
 
 	return buf.Bytes(), err
 }
 
-func MsgpUnmarshal(buf []byte, out interface{}) error {
+func JsonUnmarshal(buf []byte, out interface{}) error {
 	if out == nil {
 		return comerr.ErrNilPointer
 	}
@@ -28,5 +28,5 @@ func MsgpUnmarshal(buf []byte, out interface{}) error {
 		return comerr.ErrTypeInvalid
 	}
 
-	return codec.NewDecoder(bytes.NewBuffer(buf), msgpHandler).Decode(out)
+	return codec.NewDecoder(bytes.NewBuffer(buf), jsonHandler).Decode(out)
 }

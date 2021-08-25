@@ -59,3 +59,21 @@ func TestRandNumString(t *testing.T) {
 		}
 	}
 }
+
+func TestMsgPack(t *testing.T) {
+	type msg struct {
+		Name string `json:"name_name"`
+		Id   int64  `json:"id_id"`
+	}
+	buf, err := MsgPackMarshal(&msg{"tnt", 123669})
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	log.Println(string(buf))
+
+	newmsg := &msg{}
+	if err = MsgPackUnmarshal(buf, newmsg); err != nil {
+		log.Panicln(err.Error())
+	}
+	log.Println(*newmsg)
+}
