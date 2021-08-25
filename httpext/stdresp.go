@@ -13,14 +13,14 @@ type StdResp interface {
 }
 
 type JsonResp struct {
-	*StdRespStatus
+	*StdRespState
 	Payload interface{} `json:"payload"`
 }
 
-func NewJsonResp(status *StdRespStatus, payload interface{}) *JsonResp {
+func NewJsonResp(status *StdRespState, payload interface{}) *JsonResp {
 	return &JsonResp{
-		StdRespStatus: status,
-		Payload:       payload,
+		StdRespState: status,
+		Payload:      payload,
 	}
 }
 
@@ -50,13 +50,13 @@ func (this *JsonResp) Response(respw http.ResponseWriter) (int, error) {
 }
 
 type GobResp struct {
-	*StdRespStatus
+	*StdRespState
 	Payload interface{}
 }
 
-func NewGobResp(status *StdRespStatus, payload interface{}) *GobResp {
+func NewGobResp(status *StdRespState, payload interface{}) *GobResp {
 	return &GobResp{
-		StdRespStats: status,
+		StdRespState: status,
 		Payload:      payload,
 	}
 }
