@@ -30,6 +30,10 @@ var (
 )
 
 var (
+	StateFilesUploadIncomplete = &StdRespState{State: 20001, Msg: "files upload incomplete"}
+)
+
+var (
 	defMakeDir = func(req *http.Request, root string, perm os.FileMode) (string, error) {
 		dir := path.Join(root, time.Now().Local().Format("2006-01-02"))
 
@@ -183,6 +187,19 @@ func NewFileServer(opts ...FSrvOption) *FileServer {
 	return fsrv
 }
 
+type FileState struct {
+	Dir      string `json:"dir"`
+	Name     string `json:"name"`
+	Ext      string `json:"ext"`
+	Size     int64  `json:"size"`
+	Uploaded bool   `json:"uploaded"`
+}
+type UploadMsg struct {
+	FileStates []*FileState `json:"file_states"`
+	Success    int          `json:"success"`
+	Failed     int          `json:"failed"`
+}
+
 func (this *FileServer) Upload(resp http.ResponseWriter, req *http.Request) {
 	err := req.ParseMultipartForm(this.maxMemoryUsage)
 	if err != nil {
@@ -192,36 +209,65 @@ func (this *FileServer) Upload(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	var (
+		total int
+		msg   = &UploadMsg{}
+	)
 	// read multiple files
 	for k, fhs := range req.MultipartForm.File {
-		log.Printf("read files from field key %s\n", k)
+		log.Printf("read files from field %s\n", k)
+		total += len(fhs)
+		fstate := &FileState{}
 		for _, fh := range fhs {
+			fstate.Name = fh.Filename
+			fstate.Size = fh.Size
 			// check file size
 			if fh.Size > this.maxUploadFileSize {
 				log.Println(ErrFileSizeTooBig.Error())
-				continue
+				break
 			}
 			// detect file media type
 			ext, err := this.isValidMedia(fh)
+			fstate.Ext = ext
 			if err != nil {
 				log.Println(err.Error())
-				continue
+				break
 			}
 
 			dir, err := this.mkdir(req, this.root, this.perm)
+			fstate.Dir = dir
 			if err != nil {
 				log.Println(err.Error())
-				continue
+				break
 			}
 
 			if err = this.saveFile(dir, fh.Filename, ext, this.perm, fh); err != nil {
 				log.Println(err.Error())
-				continue
+				break
+			} else {
+				fstate.Uploaded = true
 			}
+		}
+		msg.FileStates = append(msg.FileStates, fstate)
+		if fstate.Uploaded {
+			msg.Success++
+		} else {
+			msg.Failed++
 		}
 	}
 
-	resp.WriteHeader(http.StatusOK)
+	var buf []byte
+	if total != msg.Success {
+		buf, err = this.stdresp.Encode(StateFilesUploadIncomplete, msg)
+	} else {
+		buf, err = this.stdresp.Encode(StateSuccess, msg)
+	}
+	if err != nil {
+		log.Println(err.Error())
+		resp.WriteHeader(http.StatusBadRequest)
+	} else {
+		this.stdresp.WriteBack(resp, buf)
+	}
 }
 
 func (this *FileServer) Download(resp http.ResponseWriter, req *http.Request) {
