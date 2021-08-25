@@ -174,6 +174,7 @@ func NewFileServer(opts ...FSrvOption) *FileServer {
 		maxUploadFileSize: max_upload_file_size,
 		mkdir:             defMakeDir,
 		saveFile:          defSaveFile,
+		stdresp:           &JsonResp{},
 	}
 	for _, opt := range opts {
 		opt(fsrv)
