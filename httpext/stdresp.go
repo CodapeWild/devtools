@@ -5,13 +5,10 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"net/http"
-
-	"github.com/CodapeWild/devtools/comerr"
 )
 
 type StdResp interface {
 	Encode() ([]byte, error)
-	Decode(buf []byte) error
 	Response(respw http.ResponseWriter) (int, error)
 }
 
@@ -21,14 +18,14 @@ type StdStatus struct {
 }
 
 type JsonResp struct {
-	*StdStatus
+	*StdRespState
 	Payload interface{} `json:"payload"`
 }
 
-func NewJsonResp(status *StdStatus, payload interface{}) *JsonResp {
+func NewJsonResp(status *StdRespState, payload interface{}) *JsonResp {
 	return &JsonResp{
-		StdStatus: status,
-		Payload:   payload,
+		StdRespState: status,
+		Payload:      payload,
 	}
 }
 
@@ -36,9 +33,9 @@ func (this *JsonResp) Encode() ([]byte, error) {
 	return json.Marshal(this)
 }
 
-func (this *JsonResp) Decode(buf []byte) error {
-	return json.Unmarshal(buf, this)
-}
+// func (this *JsonResp) Decode(buf []byte) error {
+// 	return json.Unmarshal(buf, this)
+// }
 
 func (this *JsonResp) Response(respw http.ResponseWriter) (int, error) {
 	var (
@@ -58,14 +55,14 @@ func (this *JsonResp) Response(respw http.ResponseWriter) (int, error) {
 }
 
 type GobResp struct {
-	*StdStatus
+	*StdRespState
 	Payload interface{}
 }
 
-func NewGobResp(status *StdStatus, payload interface{}) *GobResp {
+func NewGobResp(status *StdRespState, payload interface{}) *GobResp {
 	return &GobResp{
-		StdStatus: status,
-		Payload:   payload,
+		StdRespState: status,
+		Payload:      payload,
 	}
 }
 
@@ -76,13 +73,13 @@ func (this *GobResp) Encode() ([]byte, error) {
 	return buf.Bytes(), err
 }
 
-func (this *GobResp) Decode(buf []byte) error {
-	if this != nil {
-		return gob.NewDecoder(bytes.NewReader(buf)).Decode(this)
-	} else {
-		return comerr.ErrNilPointer
-	}
-}
+// func (this *GobResp) Decode(buf []byte) error {
+// 	if this != nil {
+// 		return gob.NewDecoder(bytes.NewReader(buf)).Decode(this)
+// 	} else {
+// 		return comerr.ErrNilPointer
+// 	}
+// }
 
 func (this *GobResp) Response(respw http.ResponseWriter) (int, error) {
 	var (
