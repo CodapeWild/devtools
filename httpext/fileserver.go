@@ -71,6 +71,7 @@ type FileServer struct {
 	validContentTypes map[string]string
 	mkdir             func(req *http.Request, root string, perm os.FileMode) (string, error)
 	saveFile          func(dir, filename, extension string, perm os.FileMode, fh *multipart.FileHeader) error
+	stdresp           StdResp
 }
 
 type FSrvOption func(fsrv *FileServer)
@@ -126,6 +127,12 @@ func ConfigMakeDirFunc(mkdir func(req *http.Request, root string, perm os.FileMo
 func ConfigSaveFileFunc(savefile func(dir, filename, extension string, perm os.FileMode, fh *multipart.FileHeader) error) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.saveFile = savefile
+	}
+}
+
+func ConfigStdResp(stdresp StdResp) FSrvOption {
+	return func(fsrv *FileServer) {
+		fsrv.stdresp = stdresp
 	}
 }
 

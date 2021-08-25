@@ -8,92 +8,45 @@ import (
 )
 
 type StdResp interface {
-	Encode() ([]byte, error)
-	Response(respw http.ResponseWriter) (int, error)
+	Encode(state *StdRespState, payload interface{}) ([]byte, error)
+	WriteBack(resp http.ResponseWriter, body []byte) (int, error)
 }
 
-type StdStatus struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
+type JsonResp struct{}
+
+func (this *JsonResp) Encode(state *StdRespState, payload interface{}) ([]byte, error) {
+	return json.Marshal(&struct {
+		State   *StdRespState `json:"state"`
+		Payload interface{}   `json:"payload"`
+	}{
+		State:   state,
+		Payload: payload,
+	})
 }
 
-type JsonResp struct {
-	*StdRespState
-	Payload interface{} `json:"payload"`
+func (this *JsonResp) WriteBack(resp http.ResponseWriter, body []byte) (int, error) {
+	resp.Header().Set("Content-Type", "application/json")
+
+	return resp.Write(body)
 }
 
-func NewJsonResp(status *StdRespState, payload interface{}) *JsonResp {
-	return &JsonResp{
-		StdRespState: status,
-		Payload:      payload,
-	}
-}
+type GobResp struct{}
 
-func (this *JsonResp) Encode() ([]byte, error) {
-	return json.Marshal(this)
-}
-
-// func (this *JsonResp) Decode(buf []byte) error {
-// 	return json.Unmarshal(buf, this)
-// }
-
-func (this *JsonResp) Response(respw http.ResponseWriter) (int, error) {
-	var (
-		buf []byte
-		err error
-		n   int
-	)
-	if buf, err = this.Encode(); err != nil {
-		respw.WriteHeader(http.StatusInternalServerError)
-	} else {
-		respw.Header().Set("Content-Type", "application/json")
-
-		n, err = respw.Write(buf)
-	}
-
-	return n, err
-}
-
-type GobResp struct {
-	*StdRespState
-	Payload interface{}
-}
-
-func NewGobResp(status *StdRespState, payload interface{}) *GobResp {
-	return &GobResp{
-		StdRespState: status,
-		Payload:      payload,
-	}
-}
-
-func (this *GobResp) Encode() ([]byte, error) {
+func (this *GobResp) Encode(state *StdRespState, payload interface{}) ([]byte, error) {
 	var buf bytes.Buffer
-	err := gob.NewEncoder(&buf).Encode(this)
+	err := gob.NewEncoder(&buf).Encode(&struct {
+		State   *StdRespState
+		Payload interface{}
+	}{
+		State:   state,
+		Payload: payload,
+	})
 
 	return buf.Bytes(), err
 }
 
-// func (this *GobResp) Decode(buf []byte) error {
-// 	if this != nil {
-// 		return gob.NewDecoder(bytes.NewReader(buf)).Decode(this)
-// 	} else {
-// 		return comerr.ErrNilPointer
-// 	}
-// }
+func (this *GobResp) WriteBack(resp http.ResponseWriter, body []byte) (int, error) {
+	resp.Header().Set("Content-Type", "application/octet-stream")
 
-func (this *GobResp) Response(respw http.ResponseWriter) (int, error) {
-	var (
-		buf []byte
-		err error
-		n   int
-	)
-	if buf, err = this.Encode(); err != nil {
-		respw.WriteHeader(http.StatusInternalServerError)
-	} else {
-		respw.Header().Set("Content-Type", "application/octet-stream")
-
-		n, err = respw.Write(buf)
-	}
-
-	return n, err
+	return resp.Write(body)
 }
