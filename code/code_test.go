@@ -65,14 +65,32 @@ func TestMsgPack(t *testing.T) {
 		Name string `json:"name_name"`
 		Id   int64  `json:"id_id"`
 	}
-	buf, err := MsgPackMarshal(&msg{"tnt", 123669})
+	buf, err := MsgpMarshal(&msg{"tnt", 123669})
 	if err != nil {
 		log.Panicln(err.Error())
 	}
 	log.Println(string(buf))
 
 	newmsg := &msg{}
-	if err = MsgPackUnmarshal(buf, newmsg); err != nil {
+	if err = MsgpUnmarshal(buf, newmsg); err != nil {
+		log.Panicln(err.Error())
+	}
+	log.Println(*newmsg)
+}
+
+func TestJson(t *testing.T) {
+	type msg struct {
+		Name string `json:"name_name"`
+		Id   int64  `json:"id_id"`
+	}
+	buf, err := JsonMarshal(&msg{"tnt", 123669})
+	if err != nil {
+		log.Panicln(err.Error())
+	}
+	log.Println(string(buf))
+
+	newmsg := &msg{}
+	if err = JsonUnmarshal(buf, newmsg); err != nil {
 		log.Panicln(err.Error())
 	}
 	log.Println(*newmsg)
