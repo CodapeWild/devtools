@@ -30,6 +30,15 @@ func (this *JsonResp) WriteBack(resp http.ResponseWriter, body []byte) (int, err
 	return resp.Write(body)
 }
 
+func ResponseJson(resp http.ResponseWriter, state *StdRespState, payload interface{}) (int, error) {
+	jsonresp := &JsonResp{}
+	if buf, err := jsonresp.Encode(state, payload); err != nil {
+		return 0, err
+	} else {
+		return jsonresp.WriteBack(resp, buf)
+	}
+}
+
 type GobResp struct{}
 
 func (this *GobResp) Encode(state *StdRespState, payload interface{}) ([]byte, error) {
@@ -49,4 +58,13 @@ func (this *GobResp) WriteBack(resp http.ResponseWriter, body []byte) (int, erro
 	resp.Header().Set("Content-Type", "application/octet-stream")
 
 	return resp.Write(body)
+}
+
+func ResponseGob(resp http.ResponseWriter, state *StdRespState, payload interface{}) (int, error) {
+	gobresp := &GobResp{}
+	if buf, err := gobresp.Encode(state, payload); err != nil {
+		return 0, err
+	} else {
+		return gobresp.WriteBack(resp, buf)
+	}
 }
