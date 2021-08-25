@@ -7,14 +7,14 @@ import (
 	"io/fs"
 	"log"
 	"mime"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
-)
 
-const (
-	upload_file_header = "upload_file_field"
+	"github.com/CodapeWild/devtools/file"
 )
 
 const (
@@ -25,17 +25,37 @@ const (
 
 var (
 	ErrFileSizeTooBig = errors.New("file size too large")
-	ErrInvalidMIME    = errors.New("invalid file type")
+	ErrInvalidMIME    = errors.New("invalid file media type")
+	ErrFileExists     = errors.New("file already exists")
 )
 
 var (
-	defMkDir = func(req *http.Request, root string) (string, error) {
+	defMakeDir = func(req *http.Request, root string, perm os.FileMode) (string, error) {
 		dir := path.Join(root, time.Now().Local().Format("2006-01-02"))
 
-		return dir, os.MkdirAll(dir, 0755)
+		return dir, os.MkdirAll(dir, perm)
 	}
-	defWriteFile = func(dir, filename, extension string, buf []byte) error {
-		return os.WriteFile(fmt.Sprintf("%s%c%s.%s", dir, os.PathSeparator, filename, extension), buf, 0755)
+	defSaveFile = func(dir, filename, extension string, perm os.FileMode, fh *multipart.FileHeader) error {
+		filePath := fmt.Sprintf("%s.%s", filepath.Join(dir, filename), extension)
+		if file.IsFileExists(filePath) {
+			return ErrFileExists
+		}
+
+		temp, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, perm)
+		if err != nil {
+			return err
+		}
+		defer temp.Close()
+
+		src, err := fh.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		_, err = io.Copy(temp, src)
+
+		return err
 	}
 )
 
@@ -43,13 +63,15 @@ type FileServer struct {
 	http.ServeMux
 	http.FileSystem
 	root              string
+	perm              os.FileMode
 	listDir           bool
 	uploadFileHeader  string
 	maxMemoryUsage    int64
 	maxUploadFileSize int64
 	validContentTypes map[string]string
-	mkdir             func(req *http.Request, root string) (string, error)
-	writefile         func(dir, filename, extension string, buf []byte) error
+	mkdir             func(req *http.Request, root string, perm os.FileMode) (string, error)
+	saveFile          func(dir, filename, extension string, perm os.FileMode, fh *multipart.FileHeader) error
+	stdresp           StdResp
 }
 
 type FSrvOption func(fsrv *FileServer)
@@ -57,6 +79,12 @@ type FSrvOption func(fsrv *FileServer)
 func ConfigRootDir(root string) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.root = root
+	}
+}
+
+func ConfigFileMode(perm os.FileMode) FSrvOption {
+	return func(fsrv *FileServer) {
+		fsrv.perm = perm
 	}
 }
 
@@ -90,15 +118,21 @@ func ConfigValidContentTypes(types map[string]string) FSrvOption {
 	}
 }
 
-func ConfigMkDirFunc(mkdir func(req *http.Request, root string) (string, error)) FSrvOption {
+func ConfigMakeDirFunc(mkdir func(req *http.Request, root string, perm os.FileMode) (string, error)) FSrvOption {
 	return func(fsrv *FileServer) {
 		fsrv.mkdir = mkdir
 	}
 }
 
-func ConfigWriteFileFunc(writefile func(dir, filename, extension string, buf []byte) error) FSrvOption {
+func ConfigSaveFileFunc(savefile func(dir, filename, extension string, perm os.FileMode, fh *multipart.FileHeader) error) FSrvOption {
 	return func(fsrv *FileServer) {
-		fsrv.writefile = writefile
+		fsrv.saveFile = savefile
+	}
+}
+
+func ConfigStdResp(stdresp StdResp) FSrvOption {
+	return func(fsrv *FileServer) {
+		fsrv.stdresp = stdresp
 	}
 }
 
@@ -131,14 +165,15 @@ func RegisterOpenPattern(pattern string) FSrvOption {
 	}
 }
 
+// NewFileServer will return valid file server, use this function to get file server object pointer
+// to avoid uncomplete creation.
 func NewFileServer(opts ...FSrvOption) *FileServer {
 	fsrv := &FileServer{
 		root:              root_dir,
-		uploadFileHeader:  upload_file_header,
 		maxMemoryUsage:    max_mem_usage,
 		maxUploadFileSize: max_upload_file_size,
-		mkdir:             defMkDir,
-		writefile:         defWriteFile,
+		mkdir:             defMakeDir,
+		saveFile:          defSaveFile,
 	}
 	for _, opt := range opts {
 		opt(fsrv)
@@ -156,78 +191,36 @@ func (this *FileServer) Upload(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	mulf, mulh, err := req.FormFile(this.uploadFileHeader)
-	if err != nil {
-		log.Println(err.Error())
-		resp.WriteHeader(http.StatusBadRequest)
+	// read multiple files
+	for k, fhs := range req.MultipartForm.File {
+		log.Printf("read files from field key %s\n", k)
+		for _, fh := range fhs {
+			// check file size
+			if fh.Size > this.maxUploadFileSize {
+				log.Println(ErrFileSizeTooBig.Error())
+				continue
+			}
+			// detect file media type
+			ext, err := this.isValidMedia(fh)
+			if err != nil {
+				log.Println(err.Error())
+				continue
+			}
 
-		return
-	}
+			dir, err := this.mkdir(req, this.root, this.perm)
+			if err != nil {
+				log.Println(err.Error())
+				continue
+			}
 
-	if mulh.Size > this.maxUploadFileSize {
-		log.Println(ErrFileSizeTooBig.Error())
-		resp.WriteHeader(http.StatusBadRequest)
-
-		return
-	}
-
-	first512 := make([]byte, 512)
-	if _, err := mulf.Read(first512); err != nil {
-		log.Println(err.Error())
-		resp.WriteHeader(http.StatusBadRequest)
-
-		return
-	}
-	mimestr := http.DetectContentType(first512)
-
-	var ext string
-	if len(this.validContentTypes) != 0 {
-		var ok bool
-		if ext, ok = this.validContentTypes[mimestr]; !ok {
-			log.Println(ErrInvalidMIME.Error())
-			resp.WriteHeader(http.StatusBadRequest)
-
-			return
-		}
-	} else {
-		if extensions, err := mime.ExtensionsByType(mimestr); err != nil {
-			log.Println(err.Error())
-			resp.WriteHeader(http.StatusBadRequest)
-
-			return
-		} else {
-			ext = extensions[0]
+			if err = this.saveFile(dir, fh.Filename, ext, this.perm, fh); err != nil {
+				log.Println(err.Error())
+				continue
+			}
 		}
 	}
 
-	if this.mkdir == nil {
-		this.mkdir = defMkDir
-	}
-	dir, err := this.mkdir(req, this.root)
-	if err != nil {
-		log.Println(err.Error())
-		resp.WriteHeader(http.StatusBadRequest)
-
-		return
-	}
-
-	buf, err := io.ReadAll(mulf)
-	if err != nil {
-		log.Println(err.Error())
-		resp.WriteHeader(http.StatusBadRequest)
-
-		return
-	}
-
-	if this.writefile == nil {
-		this.writefile = defWriteFile
-	}
-	if err = this.writefile(dir, mulh.Filename, ext, buf); err != nil {
-		log.Println(err.Error())
-		resp.WriteHeader(http.StatusBadRequest)
-	} else {
-		resp.WriteHeader(http.StatusOK)
-	}
+	resp.WriteHeader(http.StatusOK)
 }
 
 func (this *FileServer) Download(resp http.ResponseWriter, req *http.Request) {
@@ -240,6 +233,37 @@ func (this *FileServer) ReadDir(name string) ([]fs.DirEntry, error) {
 
 func (this *FileServer) Open(filePath string) (http.File, error) {
 
+}
+
+// isValidMedia detect MIME type of file if valid the extension string of file will return
+func (this *FileServer) isValidMedia(fh *multipart.FileHeader) (ext string, err error) {
+	var mulf multipart.File
+	mulf, err = fh.Open()
+	if err != nil {
+		return
+	}
+	defer mulf.Close()
+
+	first512 := make([]byte, 512)
+	if _, err = mulf.Read(first512); err != nil {
+		return
+	}
+
+	mimestr := http.DetectContentType(first512)
+
+	var ok bool
+	if len(this.validContentTypes) != 0 {
+		if ext, ok = this.validContentTypes[mimestr]; !ok {
+			err = ErrInvalidMIME
+		}
+	} else {
+		var exts []string
+		if exts, err = mime.ExtensionsByType(mimestr); err == nil {
+			ext = exts[0]
+		}
+	}
+
+	return
 }
 
 // func CheckMultiFile(handler http.Handler, formFileKey string, mval MIMEValidator) http.Handler {

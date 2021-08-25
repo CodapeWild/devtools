@@ -1,8 +1,8 @@
 package httpext
 
 type StdRespState struct {
-	State int
-	Msg   string
+	State int    `json:"state" codec:"state"`
+	Msg   string `json:"msg" codec:"msg"`
 }
 
 var (
@@ -20,7 +20,7 @@ var (
 	StateBackendAccessBlocked = &StdRespState{State: 10008, Msg: "backend accessing blocked"}
 	StateDataModifyForbidden  = &StdRespState{State: 10009, Msg: "data modification forbidden"}
 	StateTokenExpired         = &StdRespState{State: 10010, Msg: "token expired"}
-	StateDataSizeInvalid      = &StdRespState{State: 10012, Msg: "data size invalid"}
-	StateDataTypeInvalid      = &StdRespState{State: 10013, Msg: "data type invalid"}
-	StateDataMediaInvalid     = &StdRespState{State: 10014, Msg: "data media invalid"}
+	StateDataSizeInvalid      = &StdRespState{State: 10012, Msg: "invalid data size"}
+	StateDataTypeInvalid      = &StdRespState{State: 10013, Msg: "invalid data type"}
+	StateDataMediaInvalid     = &StdRespState{State: 10014, Msg: "invalid media type"}
 )
