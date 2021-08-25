@@ -9,15 +9,15 @@ import (
 	"github.com/CodapeWild/devtools/comerr"
 )
 
-type StdStatus struct {
-	Status int    `json:"status"`
-	Msg    string `json:"msg"`
-}
-
 type StdResp interface {
 	Encode() ([]byte, error)
 	Decode(buf []byte) error
 	Response(respw http.ResponseWriter) (int, error)
+}
+
+type StdStatus struct {
+	Status int    `json:"status"`
+	Msg    string `json:"msg"`
 }
 
 type JsonResp struct {
