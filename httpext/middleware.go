@@ -29,11 +29,11 @@ func MethodFilter(method string, handler http.Handler) http.Handler {
 }
 
 func AfterLogin(handler http.Handler, sessToken session.SessToken) http.Handler {
-	return http.HandlerFunc(func(respw http.ResponseWriter, req *http.Request) {
+	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		if token := req.Header.Get(Authorization); !sessToken.Verify(token) {
-			NewJsonResp(StateTokenExpired, nil).Response(respw)
+			ResponseJson(resp, StateTokenExpired, nil)
 		} else {
-			handler.ServeHTTP(respw, req)
+			handler.ServeHTTP(resp, req)
 		}
 	})
 }

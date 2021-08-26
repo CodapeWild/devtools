@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/CodapeWild/devtools/cache"
 	"github.com/CodapeWild/devtools/code"
 )
 
@@ -36,7 +37,7 @@ type critical struct {
 
 type MessageQueue struct {
 	tq      TicketQueue
-	cache   Cache
+	cache   cache.Cache
 	msgChan chan Message
 	queBuf  int
 	timeout time.Duration
@@ -53,15 +54,15 @@ func SetMsgQTicket(tickq TicketQueue) MessageQueueSetting {
 	}
 }
 
-func SetMsgQCache(cache Cache) MessageQueueSetting {
+func SetMsgQCache(cache cache.Cache) MessageQueueSetting {
 	return func(msgq *MessageQueue) {
 		msgq.cache = cache
 	}
 }
 
-func SetMsgQBuffer(queBuf int) MessageQueueSetting {
+func SetMsgQBuffer(size int) MessageQueueSetting {
 	return func(msgq *MessageQueue) {
-		msgq.queBuf = queBuf
+		msgq.queBuf = size
 	}
 }
 
@@ -97,7 +98,7 @@ func NewMessageQueue(opt ...MessageQueueSetting) *MessageQueue {
 	return msgQ
 }
 
-func (this *MessageQueue) StartUp(fanout FanoutHandler) {
+func (this *MessageQueue) StartUp(handler FanoutHandler) {
 	// populate ticket queue
 	this.tq.Fill()
 
@@ -121,13 +122,13 @@ func (this *MessageQueue) StartUp(fanout FanoutHandler) {
 			// check timeout cache up buffer
 			go this.cleanCache()
 
-			if v.MustInvoice() {
-				go func(ticket interface{}, msg Message) {
-					fanout(ticket, msg, this.closer)
+			if v.MustCheckTicket() {
+				go func(ticket Ticket, msg Message) {
+					handler(ticket, msg, this.closer)
 					this.tq.Restore(ticket)
 				}(this.tq.Fetch(), v)
 			} else {
-				go fanout(nil, v, this.closer)
+				go handler(nil, v, this.closer)
 			}
 		}
 	}()
@@ -156,6 +157,8 @@ func (this *MessageQueue) Send(msg Message) error {
 		err = ErrMsgQEnqueOvertime
 		if this.cache == nil || !this.cache.Push(msg) {
 			err = ErrCachePushFailed
+		} else {
+			err = nil
 		}
 	}
 

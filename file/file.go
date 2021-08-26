@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"os"
 	"path"
 	"reflect"
 
@@ -22,7 +23,7 @@ func ReadJsonFile(filePath string, out interface{}) error {
 		return comerr.ErrTypeInvalid
 	}
 
-	if buf, err := ioutil.ReadFile(filePath); err != nil {
+	if buf, err := os.ReadFile(filePath); err != nil {
 		return err
 	} else {
 		return json.Unmarshal(buf, out)
