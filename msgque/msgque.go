@@ -141,8 +141,8 @@ func (this *MessageQueue) Send(msg Message) error {
 	var err error
 	if this.status == MsgQ_Suspend {
 		err = ErrMsgQSuspended
-		if this.cache == nil || !this.cache.Push(msg) {
-			err = ErrCachePushFailed
+		if this.cache == nil || this.cache.Push(msg) != nil {
+			err = ErrCacheUpFailed
 		}
 
 		return err
@@ -155,8 +155,8 @@ func (this *MessageQueue) Send(msg Message) error {
 		return nil
 	case <-tmr.C: // message enqueue timeout, cache up if Cache exists
 		err = ErrMsgQEnqueOvertime
-		if this.cache == nil || !this.cache.Push(msg) {
-			err = ErrCachePushFailed
+		if this.cache == nil || this.cache.Push(msg) != nil {
+			err = ErrCacheUpFailed
 		} else {
 			err = nil
 		}

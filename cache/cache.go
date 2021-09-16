@@ -3,7 +3,7 @@ package cache
 var defCache Cache = &MemCache{}
 
 type Cache interface {
-	Push(obj interface{}) bool
+	Push(v interface{}) error
 	Pop() interface{}
 	Clear()
 	Len() int
@@ -20,8 +20,8 @@ func UseCache(cache Cache) (restore func()) {
 	}
 }
 
-func Push(obj interface{}) bool {
-	return defCache.Push(obj)
+func Push(v interface{}) error {
+	return defCache.Push(v)
 }
 
 func Pop() interface{} {

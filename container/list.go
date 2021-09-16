@@ -4,100 +4,216 @@ import (
 	"sync"
 )
 
+type List interface {
+	Insert(pos *ListNode, v interface{}) *ListNode
+	Delete(pos *ListNode) bool
+	Find(target interface{}, comp func(lopr, ropr interface{}) bool) *ListNode
+}
+
 type ListNode struct {
-	Data     interface{}
 	Previous *ListNode
 	Next     *ListNode
+	Data     interface{}
 }
 
-type ListIter func() *ListNode
-
-type List interface {
-	Insert(ListIter, *ListNode) int
-	Delete(ListIter) bool
-	Count() int
-}
-
-type LinkList struct {
+type LinkedList struct {
+	sync.Mutex
 	Head  *ListNode
 	Tail  *ListNode
-	count int
-	sync.Mutex
+	total int
 }
 
-func NewLinkList() *LinkList {
-	return &LinkList{
-		Head:  &ListNode{},
-		Tail:  nil,
-		count: 0,
-		Mutex: sync.Mutex{},
-	}
+func NewLinkedList() *LinkedList {
+	return &LinkedList{}
 }
 
-func (this *LinkList) Insert(iter ListIter, newNode *ListNode) int {
+// Append add new node after tail and return the new node pointer.
+func (this *LinkedList) Append(v interface{}) *ListNode {
 	this.Lock()
 	defer this.Unlock()
 
-	if this.Tail != nil {
-		prev := this.Tail
-		if iter != nil {
-			prev = iter()
-		}
-		newNode.Previous = prev
-		if prev.Next == nil {
-			newNode.Next = nil
-			prev.Next = newNode
+	newTail := &ListNode{Data: v}
+	if this.Head == nil {
+		this.Head = newTail
+		this.Tail = newTail
+	} else {
+		newTail.Previous = this.Tail
+		this.Tail.Next = newTail
+		this.Tail = newTail
+	}
+	this.total++
+
+	return newTail
+}
+
+// Prepend add new node before head and return new node pointer.
+func (this *LinkedList) Prepend(v interface{}) *ListNode {
+	this.Lock()
+	defer this.Unlock()
+
+	newHead := &ListNode{Data: v}
+	if this.Head == nil {
+		this.Head = newHead
+		this.Tail = newHead
+	} else {
+		newHead.Next = this.Head
+		this.Head.Previous = newHead
+		this.Head = newHead
+	}
+	this.total++
+
+	return newHead
+}
+
+// Insert add new node after pos and return new node pointer,
+// nil pointer will return if pos is not present in list.
+func (this *LinkedList) Insert(pos *ListNode, v interface{}) *ListNode {
+	if pos == nil {
+		return nil
+	}
+
+	this.Lock()
+	defer this.Unlock()
+
+	iter := this.Head
+	for iter != pos {
+		iter = iter.Next
+	}
+	var newNode *ListNode
+	if iter == pos {
+		newNode = &ListNode{Data: v}
+		if iter.Next != nil {
+			newNode.Next = iter.Next
+			newNode.Previous = iter
+			iter.Next.Previous = newNode
+			iter.Next = newNode
+		} else {
+			iter.Next = newNode
+			newNode.Previous = iter
 			this.Tail = newNode
-		} else {
-			newNode.Next = prev.Next
-			prev.Next.Previous = newNode
-			prev.Next = newNode
 		}
-
-		this.count++
-	} else {
-		this.Head.Next = newNode
-		newNode.Next = nil
-		newNode.Previous = this.Head
-		this.Tail = newNode
-
-		this.count = 1
+		this.total++
 	}
 
-	return this.count
+	return newNode
 }
 
-func (this *LinkList) Delete(iter ListIter) bool {
-	this.Lock()
-	defer this.Unlock()
-
-	if this.Tail != nil {
-		var target = this.Tail
-		if iter != nil {
-			target = iter()
-		}
-		if target.Next == nil {
-			target.Previous.Next = nil
-			this.Tail = target.Previous
-		} else {
-			target.Previous.Next = target.Next
-			target.Next.Previous = target.Previous
-		}
-	} else {
+// DeleteWithPosition will remove node referenced by pos and return true.
+func (this *LinkedList) DeleteWithPosition(pos *ListNode) bool {
+	if pos == nil {
 		return false
 	}
 
-	this.count--
-	if this.count == 0 {
-		this.Tail = nil
-	}
-
-	return true
-}
-
-func (this *LinkList) Count() int {
 	this.Lock()
 	defer this.Unlock()
 
-	return this.count
+	if pos == this.Head {
+		this.Head.Next.Previous = nil
+		this.Head = this.Head.Next
+		this.total--
+
+		return true
+	} else if pos == this.Tail {
+		this.Tail.Previous.Next = nil
+		this.Tail = this.Tail.Previous
+		this.total--
+
+		return true
+	}
+
+	iter := this.Head
+	for iter != pos {
+		iter = iter.Next
+	}
+	if iter == pos {
+		iter.Previous.Next = iter.Next
+		iter.Next.Previous = iter.Previous
+		this.total--
+
+		return true
+	}
+
+	return false
+}
+
+// DeleteWithValue
+func (this *LinkedList) DeleteWithValue(v interface{}, comp func(lopr, ropr interface{}) bool, count int) int {
+	this.Lock()
+	defer this.Unlock()
+
+	iter := this.Head
+	deleted := 0
+	for iter != nil {
+		if comp(iter.Data, v) {
+			if count > 0 && deleted == count {
+				break
+			}
+
+		}
+	}
+}
+
+// Find return the first element find in the list.
+func (this *LinkedList) Find(target interface{}, comp func(lopr, ropr interface{}) bool) *ListNode {
+	iter := this.Head
+	for iter != nil {
+		if comp(iter.Data, target) {
+			return iter
+		}
+		iter = iter.Next
+	}
+
+	return nil
+}
+
+// FindAll return all the elements find in the list.
+func (this *LinkedList) FindAll(target interface{}, comp func(lopr, ropr interface{}) bool) []*ListNode {
+
+}
+
+func (this *LinkedList) Count() int {
+	return this.total
+}
+
+func (this *LinkedList) Empty() bool {
+	return this.Head == this.Tail
+}
+
+func (this *LinkedList) add(pos *ListNode, v interface{}) *ListNode {
+	newNode := &ListNode{Data: v}
+	if pos.Next == nil { // append
+		newNode.Previous = pos
+		pos.Next = newNode
+		this.Tail = newNode
+	} else if pos.Previous == nil { // prepend
+		newNode.Next = pos
+		pos.Previous = newNode
+		this.Head = newNode
+	} else { // insert
+		newNode.Next = pos.Next
+		newNode.Previous = pos
+		pos.Next.Previous = newNode
+		pos.Next = newNode
+	}
+	this.total++
+
+	return newNode
+}
+
+func (this *LinkedList) remove(pos *ListNode) {
+	if pos == this.Head { // remove head
+		pos.Next.Previous = nil
+		pos.Next = nil
+		this.Head = pos
+	} else if pos == this.Tail { // remove tail
+		pos.Previous.Next = nil
+		pos.Previous = nil
+		this.Tail = pos
+	} else { // remove
+		pos.Previous.Next = pos.Next
+		pos.Next.Previous = pos.Previous
+		pos.Next = nil
+		pos.Previous = nil
+	}
+	this.total--
 }

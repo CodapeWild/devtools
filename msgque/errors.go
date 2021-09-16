@@ -9,7 +9,7 @@ var (
 )
 
 var (
-	ErrCachePushFailed = errors.New("push message to cache failed")
+	ErrCacheUpFailed = errors.New("cache up message failed")
 )
 
 var (

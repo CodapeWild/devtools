@@ -7,13 +7,13 @@ type MemCache struct {
 	sync.Mutex
 }
 
-func (this *MemCache) Push(obj interface{}) bool {
+func (this *MemCache) Push(v interface{}) error {
 	this.Lock()
 	defer this.Unlock()
 
-	this.mem = append(this.mem, obj)
+	this.mem = append(this.mem, v)
 
-	return true
+	return nil
 }
 
 func (this *MemCache) Pop() interface{} {
