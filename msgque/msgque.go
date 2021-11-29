@@ -153,6 +153,8 @@ func (this *MessageQueue) Send(msg Message) error {
 	// span go routine only if get ticket success
 	ticket := <-this.getTicket()
 	if ticket != InvalidTicket {
+		log.Println(ErrMsgSendFailed.Error())
+
 		return ErrMsgQueClosed
 	}
 	defer func() { this.tq.Restore() <- ticket }()
