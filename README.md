@@ -1,5 +1,5 @@
 # DevTools
 
-From and serve Golang developer
+little utils and toolkits for the sake of Golang developers.
 
-still in progress
+still in progress...

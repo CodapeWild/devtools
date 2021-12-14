@@ -10,10 +10,10 @@ type Callback interface {
 	Wait(timeout time.Duration) (rslt interface{}, err error)
 }
 type Message interface {
-	Id() interface{}       // used as fanout identify
-	Type() interface{}     // use as fanout identity
-	MustCheckTicket() bool // message can be put into message queue wihtout fetching a ticket
-	Callback               // message processing result callback
+	Id() interface{}   // used as fanout identify
+	Type() interface{} // use as fanout identity
+	Retry() int        // count down func gives message max retry times, less or equal to zero represents no times left.
+	Callback           // message processing result callback
 }
 
 type NoCallback struct{}

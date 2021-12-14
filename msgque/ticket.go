@@ -1,13 +1,22 @@
 package msgque
 
-type Ticket struct{}
+import "time"
+
+const (
+	InvalidTicket Ticket = iota - 1
+	ValidTicket          = 1
+)
+
+type Ticket int
 
 type TicketQueue interface {
-	Fill()
-	Fetch() Ticket
-	Restore(ticket Ticket)
+	FillUp()
+	Fetch() <-chan Ticket
+	Restore() chan<- Ticket
 	Len() int
 	Cap() int
+	Timeout() time.Duration
+	RetryDelay() time.Duration
 }
 
 type SimpleTicketQueue chan Ticket
@@ -16,18 +25,18 @@ func NewSimpleTicketQueue(maxThreads int) SimpleTicketQueue {
 	return make(chan Ticket, maxThreads)
 }
 
-func (this SimpleTicketQueue) Fill() {
-	for i := this.Len(); i < this.Cap(); i++ {
-		this.Restore(Ticket{})
+func (this SimpleTicketQueue) FillUp() {
+	for this.Len() < this.Cap() {
+		this.Restore() <- ValidTicket
 	}
 }
 
-func (this SimpleTicketQueue) Fetch() Ticket {
-	return <-this
+func (this SimpleTicketQueue) Fetch() <-chan Ticket {
+	return this
 }
 
-func (this SimpleTicketQueue) Restore(ticket Ticket) {
-	this <- ticket
+func (this SimpleTicketQueue) Restore() chan<- Ticket {
+	return this
 }
 
 func (this SimpleTicketQueue) Len() int {
@@ -36,4 +45,12 @@ func (this SimpleTicketQueue) Len() int {
 
 func (this SimpleTicketQueue) Cap() int {
 	return cap(this)
+}
+
+func (this SimpleTicketQueue) Timeout() time.Duration {
+	return 3 * time.Second
+}
+
+func (this SimpleTicketQueue) RetryDelay() time.Duration {
+	return time.Second
 }
