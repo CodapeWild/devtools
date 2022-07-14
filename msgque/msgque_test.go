@@ -12,3 +12,12 @@ func TestMain(t *testing.M) {
 
 	os.Exit(t.Run())
 }
+
+func TestSimpleTicketQueue(t *testing.T) {
+	tq := NewSimpleTicketQueue(10)
+	for i := 0; i < 10; i++ {
+		go func() {
+			tq.Fetch()
+		}()
+	}
+}

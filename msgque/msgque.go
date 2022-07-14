@@ -104,7 +104,7 @@ func NewMessageQueue(opt ...MessageQueueSetting) (*MessageQueue, error) {
 	if msgq.tq == nil {
 		return nil, ErrTicketQueueNil
 	}
-	msgq.tq.FillUp()
+	// msgq.tq.FillUp()
 
 	msgq.msgQue = make(chan Message, msgq.queBuf)
 
@@ -136,11 +136,11 @@ func (this *MessageQueue) StartUp(handler FanoutHandler) {
 
 			// spin go routine only if get ticket success
 			ticket := <-this.getTicket()
-			if ticket != ValidTicket {
-				log.Println(ErrMsgQueClosed.Error())
+			// if ticket != ValidTicket {
+			// 	log.Println(ErrMsgQueClosed.Error())
 
-				return
-			}
+			// 	return
+			// }
 			go func(ticket Ticket, msg Message) {
 				handler(ticket, msg)
 				this.tq.Restore() <- ticket
@@ -152,11 +152,11 @@ func (this *MessageQueue) StartUp(handler FanoutHandler) {
 func (this *MessageQueue) Send(msg Message) error {
 	// span go routine only if get ticket success
 	ticket := <-this.getTicket()
-	if ticket != InvalidTicket {
-		log.Println(ErrMsgSendFailed.Error())
+	// if ticket != InvalidTicket {
+	// 	log.Println(ErrMsgSendFailed.Error())
 
-		return ErrMsgQueClosed
-	}
+	// 	return ErrMsgQueClosed
+	// }
 	defer func() { this.tq.Restore() <- ticket }()
 
 	go func() {
@@ -232,26 +232,26 @@ func (this *MessageQueue) Status() *MsgQueueStatus {
 func (this *MessageQueue) getTicket() <-chan Ticket {
 	res := make(chan Ticket)
 	for {
-		timer := time.NewTimer(this.tq.Timeout())
+		// timer := time.NewTimer(this.tq.Timeout())
 		select {
 		case <-this.closer:
 			log.Println("message queue closed")
-			res <- InvalidTicket
+			// res <- InvalidTicket
 
 			return res
 		case <-this.suspend:
-			timer.Stop()
+			// timer.Stop()
 			log.Println("message queue suspended")
 			<-this.resume
 			log.Println("message queue resumed")
 		case ticket := <-this.tq.Fetch():
-			timer.Stop()
+			// timer.Stop()
 			res <- ticket
 
 			return res
-		case <-timer.C:
-			log.Printf("fetch ticket timeout, sleep %ds and retry", this.tq.RetryDelay()/time.Second)
-			time.Sleep(this.tq.RetryDelay())
+			// case <-timer.C:
+			// 	log.Printf("fetch ticket timeout, sleep %ds and retry", this.tq.RetryDelay()/time.Second)
+			// 	time.Sleep(this.tq.RetryDelay())
 		}
 	}
 }
