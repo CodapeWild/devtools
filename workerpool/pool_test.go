@@ -25,17 +25,17 @@ func TestWorkerPool(t *testing.T) {
 	}
 
 	wg := sync.WaitGroup{}
-	wg.Add(1000)
+	wg.Add(10000)
 	start := time.Now()
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10000; i++ {
 		go func(i int) {
 			defer wg.Done()
 
-			for j := 0; j < 10; j++ {
+			for j := 0; j < 100; j++ {
 				job, err := NewJob(func(input interface{}) (output interface{}, err error) {
 					log.Printf("get new job, input: %v\n", input)
 
-					return fmt.Sprintf("finish job %d\n", j), nil
+					return fmt.Sprintf("finish job %d in goroutine %d\n", j, i), nil
 				},
 					WithInput(fmt.Sprintf("goroutine %d, job %d\n", i, j)),
 					WithCallback(func(input, output interface{}, cost time.Duration, err error) {
