@@ -17,8 +17,8 @@ func TestMain(m *testing.M) {
 }
 
 func TestWorkerPool(t *testing.T) {
-	wpool := NewWorkerPool(10)
-	err := wpool.Start(3)
+	wpool := NewWorkerPool(100)
+	err := wpool.Start(16)
 	if err != nil {
 		t.Error(err.Error())
 		t.FailNow()
@@ -55,6 +55,6 @@ func TestWorkerPool(t *testing.T) {
 
 	log.Printf("send jobs finished, cost %ds\n", time.Since(start)/time.Second)
 
-	time.Sleep(3 * time.Second)
+	time.Sleep(1 * time.Second)
 	wpool.Shutdown()
 }
