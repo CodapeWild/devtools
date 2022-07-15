@@ -2,48 +2,66 @@ package workerpool
 
 import (
 	"errors"
-	"log"
 	"time"
 )
 
-type Process func(interface{}) interface{}
+type Process func(input interface{}) (output interface{}, err error)
+
+type Callback func(input, output interface{}, cost time.Duration, err error)
+
+type result struct {
+	output interface{}
+	err    error
+}
 
 type Job struct {
 	input   interface{}
-	output  chan interface{}
 	p       Process
+	cb      Callback
 	timeout time.Duration
 }
 
-func NewJob(input interface{}, output chan interface{}, p Process, timeout time.Duration) (*Job, error) {
-	if output == nil {
-		return nil, errors.New("output chan cannot be nil.")
-	}
-	if p == nil {
-		return nil, errors.New("process chan not be nil.")
-	}
+type Option func(job *Job)
 
-	return &Job{
-		input:   input,
-		output:  output,
-		p:       p,
-		timeout: timeout,
-	}, nil
+func WithInput(input interface{}) Option {
+	return func(job *Job) {
+		job.input = input
+	}
 }
 
-func (j *Job) WaitResult() (interface{}, error) {
-	r, ok := <-j.output
-	if ok {
-		return r, nil
+func WithTimeout(timeout time.Duration) Option {
+	return func(job *Job) {
+		job.timeout = timeout
+	}
+}
+
+func WithCallback(cb Callback) Option {
+	return func(job *Job) {
+		job.cb = cb
+	}
+}
+
+func NewJob(p Process, options ...Option) (*Job, error) {
+	if p == nil {
+		return nil, errors.New("process can not be nil.")
 	}
 
-	return nil, errors.New("wait job result timeout.")
+	job := &Job{p: p}
+	for i := range options {
+		options[i](job)
+	}
+
+	return job, nil
 }
 
 type WorkerPool chan *Job
 
-func NewWorkerPool() WorkerPool {
-	return make(WorkerPool)
+func NewWorkerPool(buffer int) WorkerPool {
+	if buffer < 0 {
+		return nil
+	}
+
+	return make(WorkerPool, buffer)
 }
 
 func (wp WorkerPool) Start(threads int) error {
@@ -51,7 +69,7 @@ func (wp WorkerPool) Start(threads int) error {
 		return errors.New("worker pool is not ready.")
 	}
 	if threads < 1 {
-		return errors.New("worker pool needs at least has one thread.")
+		return errors.New("worker pool needs at least one thread.")
 	}
 
 	for i := 0; i < threads; i++ {
@@ -59,6 +77,10 @@ func (wp WorkerPool) Start(threads int) error {
 	}
 
 	return nil
+}
+
+func (wp WorkerPool) Stop() {
+	close(wp)
 }
 
 func (wp WorkerPool) MoreWork(sendTimeout time.Duration, jobs ...*Job) error {
@@ -78,7 +100,7 @@ func (wp WorkerPool) MoreWork(sendTimeout time.Duration, jobs ...*Job) error {
 		for i := range jobs {
 			select {
 			case <-tick.C:
-				return errors.New("send job timeout.")
+				return errors.New("send job to worker pool timeout.")
 			case wp <- jobs[i]:
 			}
 		}
@@ -93,21 +115,41 @@ func (wp WorkerPool) worker() {
 		return
 	}
 
-	for job := range wp {
+	for {
+		job, ok := <-wp
+		if !ok {
+			break
+		}
 		if job == nil {
 			continue
 		}
+		var start = time.Now()
 		if job.timeout < 1 {
-			job.output <- job.p(job.input)
+			output, err := job.p(job.input)
+			if job.cb != nil {
+				job.cb(job.input, output, time.Since(start), err)
+			}
 		} else {
-			tick := time.NewTicker(job.timeout)
+			var (
+				tick = time.NewTicker(job.timeout)
+				rslt = make(chan *result)
+			)
+			go func() {
+				r, err := job.p(job.input)
+				rslt <- &result{r, err}
+			}()
 			select {
 			case <-tick.C:
-				log.Println("job timeout in worker.")
-			case job.output <- job.p(job.input):
+				if job.cb != nil {
+					job.cb(job.input, nil, time.Since(start), errors.New("job process timeout."))
+				}
+			case r := <-rslt:
+				if job.cb != nil {
+					job.cb(job.input, r.output, time.Since(start), r.err)
+				}
 				tick.Stop()
+				close(rslt)
 			}
 		}
-		close(job.output)
 	}
 }
