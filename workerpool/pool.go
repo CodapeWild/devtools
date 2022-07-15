@@ -79,7 +79,7 @@ func (wp WorkerPool) Start(threads int) error {
 	return nil
 }
 
-func (wp WorkerPool) Stop() {
+func (wp WorkerPool) Shutdown() {
 	close(wp)
 }
 

@@ -3,9 +3,18 @@ package workerpool
 import (
 	"fmt"
 	"log"
+	"os"
+	"sync"
 	"testing"
 	"time"
 )
+
+func TestMain(m *testing.M) {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetOutput(os.Stdout)
+
+	m.Run()
+}
 
 func TestWorkerPool(t *testing.T) {
 	wpool := NewWorkerPool(10)
@@ -15,11 +24,16 @@ func TestWorkerPool(t *testing.T) {
 		t.FailNow()
 	}
 
-	for i := 0; i < 100; i++ {
+	wg := sync.WaitGroup{}
+	wg.Add(1000)
+	start := time.Now()
+	for i := 0; i < 1000; i++ {
 		go func(i int) {
+			defer wg.Done()
+
 			for j := 0; j < 10; j++ {
 				job, err := NewJob(func(input interface{}) (output interface{}, err error) {
-					log.Printf("input: %v\n", input)
+					log.Printf("get new job, input: %v\n", input)
 
 					return fmt.Sprintf("finish job %d\n", j), nil
 				},
@@ -37,6 +51,10 @@ func TestWorkerPool(t *testing.T) {
 			}
 		}(i)
 	}
+	wg.Wait()
 
-	select {}
+	log.Printf("send jobs finished, cost %ds\n", time.Since(start)/time.Second)
+
+	time.Sleep(3 * time.Second)
+	wpool.Shutdown()
 }
