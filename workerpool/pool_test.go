@@ -18,36 +18,45 @@ func TestMain(m *testing.M) {
 
 func TestWorkerPool(t *testing.T) {
 	wpool := NewWorkerPool(100)
-	err := wpool.Start(16)
+	err := wpool.Start(8)
 	if err != nil {
 		t.Error(err.Error())
 		t.FailNow()
 	}
 
+	var n, m = 1000, 1000
 	wg := sync.WaitGroup{}
-	wg.Add(10000)
+	wg.Add(n)
 	start := time.Now()
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < n; i++ {
 		go func(i int) {
 			defer wg.Done()
 
-			for j := 0; j < 100; j++ {
-				job, err := NewJob(func(input interface{}) (output interface{}, err error) {
-					log.Printf("get new job, input: %v\n", input)
-
-					return fmt.Sprintf("finish job %d in goroutine %d\n", j, i), nil
-				},
+			for j := 0; j < m; j++ {
+				job, err := NewJob(
 					WithInput(fmt.Sprintf("goroutine %d, job %d\n", i, j)),
-					WithCallback(func(input, output interface{}, cost time.Duration, err error) {
-						log.Printf("result: %v cost: %dns, err: %v\n", output, cost, err)
+					WithOutput(make(chan interface{})),
+					WithTimeout(time.Second),
+					WithProcess(func(input interface{}) (output interface{}) {
+						log.Printf("start process input %d:%d\n", i, j)
+
+						return fmt.Sprintf("finish process %d:%d\n", i, j)
 					}),
-					WithTimeout(time.Second))
+					WithProcessCallback(func(input interface{}, cost time.Duration, isTimeout bool) {
+						log.Printf("finish process and callback, input: %v cost: %d isTimeout: %v\n", input, cost, isTimeout)
+					}),
+				)
 				if err != nil {
 					t.Errorf(err.Error())
 					continue
 				}
 
 				wpool.MoreWork(time.Second, job)
+
+				// log.Println(<-job.output)
+				go func(job *Job) {
+					log.Println(<-job.output)
+				}(job)
 			}
 		}(i)
 	}
