@@ -7,7 +7,7 @@ import (
 
 type Process func(input interface{}) (output interface{})
 
-type ProcessCallback func(input interface{}, cost time.Duration, isTimeout bool)
+type ProcessCallback func(input, output interface{}, cost time.Duration, isTimeout bool)
 
 type Job struct {
 	input   interface{}
@@ -22,12 +22,6 @@ type Option func(job *Job)
 func WithInput(input interface{}) Option {
 	return func(job *Job) {
 		job.input = input
-	}
-}
-
-func WithOutput(output chan interface{}) Option {
-	return func(job *Job) {
-		job.output = output
 	}
 }
 
@@ -57,9 +51,7 @@ func NewJob(options ...Option) (*Job, error) {
 	if job.p == nil {
 		return nil, errors.New("process can not be nil.")
 	}
-	if job.output == nil {
-		return nil, errors.New("output chan can not be nil")
-	}
+	job.output = make(chan interface{}, 1)
 
 	return job, nil
 }
@@ -134,25 +126,25 @@ func (wp WorkerPool) worker() {
 			continue
 		}
 
-		var start = time.Now()
+		var (
+			start     = time.Now()
+			isTimeout = false
+		)
 		if job.timeout < 1 {
 			job.output <- job.p(job.input)
 		} else {
-			var (
-				tick      = time.NewTicker(job.timeout)
-				isTimeout = false
-			)
+			var tick = time.NewTicker(job.timeout)
 			select {
 			case <-tick.C:
 				isTimeout = true
 			case job.output <- job.p(job.input):
 			}
 			tick.Stop()
-			close(job.output)
+		}
+		close(job.output)
 
-			if job.cb != nil {
-				job.cb(job.input, time.Since(start), isTimeout)
-			}
+		if job.cb != nil {
+			job.cb(job.input, <-job.output, time.Since(start), isTimeout)
 		}
 	}
 }
