@@ -2,6 +2,7 @@ package workerpool
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -83,37 +84,48 @@ func (wp WorkerPool) Shutdown() {
 	close(wp)
 }
 
-func (wp WorkerPool) MoreWork(sendTimeout time.Duration, jobs ...*Job) error {
+func (wp WorkerPool) MoreJobsSync(jobs ...*Job) error {
 	if wp == nil {
 		return errors.New("worker pool is not ready")
 	}
-	if len(jobs) == 0 {
-		return errors.New("job list can not be empty")
+
+	for i := range jobs {
+		wp <- jobs[i]
 	}
 
-	if sendTimeout < 0 {
-		for i := range jobs {
-			wp <- jobs[i]
+	return nil
+}
+
+func (wp WorkerPool) MoreJobsWithoutTimeout(jobs ...*Job) error {
+	var busyCount int
+	for i := range jobs {
+		select {
+		case wp <- jobs[i]:
+		default:
+			busyCount++
 		}
-	} else if sendTimeout == 0 {
-		for i := range jobs {
-			select {
-			case wp <- jobs[i]:
-			default:
-				return errors.New("workerpool busy try later")
-			}
-		}
-	} else {
-		tick := time.NewTicker(sendTimeout)
-		for i := range jobs {
-			select {
-			case <-tick.C:
-				return errors.New("send job to worker pool timeout")
-			case wp <- jobs[i]:
-			}
-		}
-		tick.Stop()
 	}
+	if busyCount != 0 {
+		return fmt.Errorf("worker pool is busy, failed send jobs %d", busyCount)
+	}
+
+	return nil
+}
+
+func (wp WorkerPool) MoreJobsWithTimeout(timeout time.Duration, jobs ...*Job) error {
+	var (
+		tick    = time.NewTicker(timeout)
+		success int
+	)
+	for i := range jobs {
+		select {
+		case <-tick.C:
+			return fmt.Errorf("send jobs to worker pool timeout, successfully send %d", success)
+		case wp <- jobs[i]:
+			success++
+		}
+	}
+	tick.Stop()
 
 	return nil
 }

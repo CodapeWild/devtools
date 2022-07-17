@@ -17,7 +17,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestWorkerPool(t *testing.T) {
-	wpool := NewWorkerPool(900000)
+	wpool := NewWorkerPool(500000)
 	err := wpool.Start(16)
 	if err != nil {
 		t.Error(err.Error())
@@ -42,7 +42,7 @@ func TestWorkerPool(t *testing.T) {
 						return fmt.Sprintf("finish process %d:%d\n", i, j)
 					}),
 					WithProcessCallback(func(input, output interface{}, cost time.Duration, isTimeout bool) {
-						log.Printf("finish process and callback, input: %v, output: %v, cost: %d isTimeout: %v\n", input, output, cost, isTimeout)
+						log.Printf("finish process and callback, input: %v, output: %v, cost: %dms isTimeout: %v\n", input, output, cost/time.Millisecond, isTimeout)
 					}),
 				)
 				if err != nil {
@@ -50,9 +50,15 @@ func TestWorkerPool(t *testing.T) {
 					continue
 				}
 
-				if err = wpool.MoreWork(0, job); err != nil {
+				if err = wpool.MoreJobsSync(job); err != nil {
 					log.Println(err.Error())
 				}
+				// if err = wpool.MoreJobsWithoutTimeout(job); err != nil {
+				// 	log.Println(err.Error())
+				// }
+				// if err = wpool.MoreJobsWithTimeout(10*time.Millisecond, job); err != nil {
+				// 	log.Println(err.Error())
+				// }
 			}
 		}(i)
 	}
