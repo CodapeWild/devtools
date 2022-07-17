@@ -48,7 +48,7 @@ func NewJob(options ...Option) (*Job, error) {
 		options[i](job)
 	}
 	if job.p == nil {
-		return nil, errors.New("process can not be nil.")
+		return nil, errors.New("process can not be nil")
 	}
 
 	return job, nil
@@ -66,10 +66,10 @@ func NewWorkerPool(buffer int) WorkerPool {
 
 func (wp WorkerPool) Start(threads int) error {
 	if wp == nil {
-		return errors.New("worker pool is not ready.")
+		return errors.New("worker pool is not ready")
 	}
 	if threads < 1 {
-		return errors.New("worker pool needs at least one thread.")
+		return errors.New("worker pool needs at least one thread")
 	}
 
 	for i := 0; i < threads; i++ {
@@ -85,22 +85,30 @@ func (wp WorkerPool) Shutdown() {
 
 func (wp WorkerPool) MoreWork(sendTimeout time.Duration, jobs ...*Job) error {
 	if wp == nil {
-		return errors.New("worker pool is not ready.")
+		return errors.New("worker pool is not ready")
 	}
 	if len(jobs) == 0 {
-		return errors.New("job list can not be empty.")
+		return errors.New("job list can not be empty")
 	}
 
-	if sendTimeout < 1 {
+	if sendTimeout < 0 {
 		for i := range jobs {
 			wp <- jobs[i]
+		}
+	} else if sendTimeout == 0 {
+		for i := range jobs {
+			select {
+			case wp <- jobs[i]:
+			default:
+				return errors.New("workerpool busy try later")
+			}
 		}
 	} else {
 		tick := time.NewTicker(sendTimeout)
 		for i := range jobs {
 			select {
 			case <-tick.C:
-				return errors.New("send job to worker pool timeout.")
+				return errors.New("send job to worker pool timeout")
 			case wp <- jobs[i]:
 			}
 		}
@@ -137,6 +145,7 @@ func (wp WorkerPool) worker() {
 			result := make(chan interface{}, 1)
 			go func(job *Job, r chan interface{}) {
 				r <- job.p(job.input)
+				close(r)
 			}(job, result)
 
 			var tick = time.NewTicker(job.timeout)
@@ -149,7 +158,6 @@ func (wp WorkerPool) worker() {
 				}
 			}
 			tick.Stop()
-			close(result)
 		}
 	}
 }
