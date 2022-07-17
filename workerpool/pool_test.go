@@ -56,7 +56,7 @@ func TestWorkerPool(t *testing.T) {
 	}
 	wg.Wait()
 
-	log.Printf("send jobs finished, cost %dms\n", time.Since(start)/time.Millisecond)
+	log.Printf("send jobs finished, cost %ds\n", time.Since(start)/time.Second)
 
 	time.Sleep(1 * time.Second)
 	wpool.Shutdown()
