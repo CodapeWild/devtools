@@ -50,12 +50,12 @@ func TestWorkerPool(t *testing.T) {
 					continue
 				}
 
-				if err = wpool.MoreJobsSync(job); err != nil {
-					log.Println(err.Error())
-				}
-				// if err = wpool.MoreJobsWithoutTimeout(job); err != nil {
+				// if err = wpool.MoreJobsSync(job); err != nil {
 				// 	log.Println(err.Error())
 				// }
+				if err = wpool.MoreJobsWithoutTimeout(job); err != nil {
+					log.Println(err.Error())
+				}
 				// if err = wpool.MoreJobsWithTimeout(10*time.Millisecond, job); err != nil {
 				// 	log.Println(err.Error())
 				// }

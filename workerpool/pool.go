@@ -88,6 +88,9 @@ func (wp WorkerPool) MoreJobsSync(jobs ...*Job) error {
 	if wp == nil {
 		return errors.New("worker pool is not ready")
 	}
+	if len(jobs) == 0 {
+		return nil
+	}
 
 	for i := range jobs {
 		wp <- jobs[i]
@@ -97,6 +100,13 @@ func (wp WorkerPool) MoreJobsSync(jobs ...*Job) error {
 }
 
 func (wp WorkerPool) MoreJobsWithoutTimeout(jobs ...*Job) error {
+	if wp == nil {
+		return errors.New("worker pool is not ready")
+	}
+	if len(jobs) == 0 {
+		return nil
+	}
+
 	var busyCount int
 	for i := range jobs {
 		select {
@@ -113,6 +123,13 @@ func (wp WorkerPool) MoreJobsWithoutTimeout(jobs ...*Job) error {
 }
 
 func (wp WorkerPool) MoreJobsWithTimeout(timeout time.Duration, jobs ...*Job) error {
+	if wp == nil {
+		return errors.New("worker pool is not ready")
+	}
+	if len(jobs) == 0 {
+		return nil
+	}
+
 	var (
 		tick    = time.NewTicker(timeout)
 		success int
@@ -144,14 +161,11 @@ func (wp WorkerPool) worker() {
 			continue
 		}
 
-		var (
-			start     = time.Now()
-			isTimeout = false
-		)
+		var start = time.Now()
 		if job.timeout < 1 {
 			r := job.p(job.input)
 			if job.cb != nil {
-				job.cb(job.input, r, time.Since(start), isTimeout)
+				job.cb(job.input, r, time.Since(start), false)
 			}
 		} else {
 			result := make(chan interface{}, 1)
@@ -163,13 +177,15 @@ func (wp WorkerPool) worker() {
 			var tick = time.NewTicker(job.timeout)
 			select {
 			case <-tick.C:
-				isTimeout = true
+				if job.cb != nil {
+					job.cb(job.input, nil, time.Since(start), true)
+				}
 			case r := <-result:
 				if job.cb != nil {
-					job.cb(job.input, r, time.Since(start), isTimeout)
+					job.cb(job.input, r, time.Since(start), false)
 				}
+				tick.Stop()
 			}
-			tick.Stop()
 		}
 	}
 }
